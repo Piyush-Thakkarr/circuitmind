@@ -1,0 +1,5 @@
+name: T01_blink
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "BLINK"

@@ -1,0 +1,14 @@
+id: T01_blink
+category: output_basics
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Blink a red LED connected to the ESP32 once per second (500 ms on, 500 ms
+  off). After the second full blink cycle, print the word BLINK to the serial
+  monitor at 115200 baud.
+status_line: BLINK
+timeout_ms: 5000
+notes: >
+  Simplest possible task. Proves the harness end to end. A design passes only
+  if the LED is wired through a current-limiting resistor to a GPIO and the
+  firmware prints BLINK after two cycles, which takes about two seconds of
+  simulated time.

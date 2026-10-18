@@ -1,0 +1,345 @@
+{
+  "extracted_at": "2026-09-14T16:06:22+00:00",
+  "source": "wokwi-cli lint",
+  "hash": "85454b7fb8120f48",
+  "parts": {
+    "wokwi-esp32-devkit-v1": {
+      "pins": [
+        "VIN",
+        "GND.1",
+        "GND.2",
+        "D2",
+        "D4",
+        "D5",
+        "D12",
+        "D13",
+        "D14",
+        "D15",
+        "D18",
+        "D19",
+        "D21",
+        "D22",
+        "D23",
+        "D25",
+        "D26",
+        "D27",
+        "D32",
+        "D33",
+        "D34",
+        "D35",
+        "VN",
+        "VP",
+        "EN",
+        "TX0",
+        "TX2",
+        "RX0",
+        "RX2",
+        "3V3"
+      ],
+      "description": "ESP32 DevKit v1 board. GPIO pins are named D<n>. D34, D35, VN, VP are input-only."
+    },
+    "wokwi-led": {
+      "pins": [
+        "A",
+        "C"
+      ],
+      "description": "Single-colour LED. attrs.color: red, green, blue, yellow, white, orange."
+    },
+    "wokwi-rgb-led": {
+      "pins": [
+        "COM",
+        "R",
+        "G",
+        "B"
+      ],
+      "description": "Common-cathode RGB LED. COM to ground, R/G/B through resistors."
+    },
+    "wokwi-resistor": {
+      "pins": [
+        "1",
+        "2"
+      ],
+      "description": "Resistor. attrs.value in ohms as a string, e.g. \"220\"."
+    },
+    "wokwi-pushbutton": {
+      "pins": [
+        "1.l",
+        "2.l",
+        "1.r",
+        "2.r"
+      ],
+      "description": "Momentary pushbutton. Pins 1.l/1.r are one side, 2.l/2.r the other. attrs.color optional."
+    },
+    "wokwi-slide-switch": {
+      "pins": [
+        "1",
+        "2",
+        "3"
+      ],
+      "description": "SPDT slide switch. Pin 2 is common; 1 and 3 are the two positions."
+    },
+    "wokwi-potentiometer": {
+      "pins": [
+        "GND",
+        "SIG",
+        "VCC"
+      ],
+      "description": "Rotary potentiometer. SIG to an ADC-capable pin."
+    },
+    "wokwi-buzzer": {
+      "pins": [
+        "1",
+        "2"
+      ],
+      "description": "Piezo buzzer. Pin 1 to GPIO, pin 2 to ground."
+    },
+    "wokwi-servo": {
+      "pins": [
+        "GND",
+        "V+",
+        "PWM"
+      ],
+      "description": "Hobby servo. PWM to a GPIO, V+ to 5V or VIN, GND to ground."
+    },
+    "wokwi-dht22": {
+      "pins": [
+        "VCC",
+        "SDA",
+        "NC",
+        "GND"
+      ],
+      "description": "DHT22 temperature and humidity sensor. SDA is the data pin. Use the DHT sensor library."
+    },
+    "wokwi-hc-sr04": {
+      "pins": [
+        "VCC",
+        "TRIG",
+        "ECHO",
+        "GND"
+      ],
+      "description": "HC-SR04 ultrasonic distance sensor. TRIG output, ECHO input."
+    },
+    "wokwi-photoresistor-sensor": {
+      "pins": [
+        "VCC",
+        "GND",
+        "DO",
+        "AO"
+      ],
+      "description": "LDR module with analog (AO) and digital (DO) outputs."
+    },
+    "wokwi-ntc-temperature-sensor": {
+      "pins": [
+        "VCC",
+        "OUT",
+        "GND"
+      ],
+      "description": "NTC thermistor module with analog OUT."
+    },
+    "wokwi-pir-motion-sensor": {
+      "pins": [
+        "VCC",
+        "OUT",
+        "GND"
+      ],
+      "description": "PIR motion sensor. OUT goes high on motion."
+    },
+    "wokwi-mpu6050": {
+      "pins": [
+        "INT",
+        "AD0",
+        "XCL",
+        "XDA",
+        "SDA",
+        "SCL",
+        "GND",
+        "VCC"
+      ],
+      "description": "MPU6050 6-axis IMU over I2C (SDA, SCL). Address 0x68."
+    },
+    "wokwi-ds18b20": {
+      "pins": [
+        "VCC",
+        "DQ",
+        "GND"
+      ],
+      "description": "DS18B20 one-wire temperature sensor. DQ is the data pin, needs a pull-up."
+    },
+    "wokwi-lcd1602": {
+      "pins": [
+        "A",
+        "K",
+        "V0",
+        "RS",
+        "RW",
+        "E",
+        "D0",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "VSS",
+        "VDD",
+        "GND",
+        "VCC",
+        "SCL",
+        "SDA"
+      ],
+      "description": "16x2 character LCD. Use SCL/SDA for the I2C backpack (LiquidCrystal_I2C, address 0x27)."
+    },
+    "wokwi-lcd2004": {
+      "pins": [
+        "A",
+        "K",
+        "V0",
+        "RS",
+        "RW",
+        "E",
+        "D0",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "VSS",
+        "VDD",
+        "GND",
+        "VCC",
+        "SCL",
+        "SDA"
+      ],
+      "description": "20x4 character LCD. Use SCL/SDA for the I2C backpack (address 0x27)."
+    },
+    "board-ssd1306": {
+      "pins": [
+        "GND",
+        "SCL",
+        "SDA",
+        "VCC"
+      ],
+      "description": "128x64 OLED over I2C (Adafruit_SSD1306, address 0x3C)."
+    },
+    "wokwi-7segment": {
+      "pins": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "DP",
+        "DIG1",
+        "DIG2",
+        "DIG3",
+        "DIG4",
+        "COM",
+        "COM.1",
+        "COM.2",
+        "CLN"
+      ],
+      "description": "Seven-segment display. attrs.digits sets number of digits."
+    },
+    "wokwi-neopixel": {
+      "pins": [
+        "DIN",
+        "VDD",
+        "VSS",
+        "DOUT"
+      ],
+      "description": "Single WS2812 NeoPixel. DIN from GPIO, DOUT to the next pixel."
+    },
+    "wokwi-membrane-keypad": {
+      "pins": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "description": "4x4 membrane keypad. Rows R1-R4, columns C1-C4. Use the Keypad library."
+    },
+    "wokwi-ky-040": {
+      "pins": [
+        "CLK",
+        "DT",
+        "SW",
+        "VCC",
+        "GND"
+      ],
+      "description": "KY-040 rotary encoder. CLK, DT for rotation, SW for the push."
+    },
+    "wokwi-relay-module": {
+      "pins": [
+        "IN",
+        "NO",
+        "NC",
+        "COM",
+        "VCC",
+        "GND"
+      ],
+      "description": "Relay module. IN from GPIO; NO/NC/COM are the switched contacts."
+    },
+    "wokwi-stepper-motor": {
+      "pins": [
+        "A-",
+        "A+",
+        "B+",
+        "B-"
+      ],
+      "description": "Bipolar stepper. Needs a driver; A+/A-/B+/B- are coil ends."
+    },
+    "wokwi-ir-receiver": {
+      "pins": [
+        "VCC",
+        "DAT",
+        "GND"
+      ],
+      "description": "IR receiver. DAT to GPIO. Use IRremote."
+    },
+    "wokwi-analog-joystick": {
+      "pins": [
+        "VCC",
+        "VERT",
+        "HORZ",
+        "SEL",
+        "GND"
+      ],
+      "description": "Two-axis joystick with push. VERT/HORZ analog, SEL digital."
+    },
+    "wokwi-microsd-card": {
+      "pins": [
+        "CS",
+        "SCK",
+        "DI",
+        "DO",
+        "CD",
+        "GND",
+        "VCC"
+      ],
+      "description": "MicroSD over SPI. CS, SCK, DI (MOSI), DO (MISO)."
+    },
+    "wokwi-ili9341": {
+      "pins": [
+        "D/C",
+        "CS",
+        "SCK",
+        "MOSI",
+        "MISO",
+        "RST",
+        "LED",
+        "VCC",
+        "GND"
+      ],
+      "description": "ILI9341 TFT over SPI."
+    }
+  }
+}

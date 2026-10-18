@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CircuitMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0B1016;--bg2:#111923;--bg3:#16212C;--line:#1F2B38;--line2:#2B3A4A;
+  --ink:#EAF0F5;--ink2:#93A1B0;--ink3:#5F6E7D;
+  --copper:#E0913B;--copper2:#F5B86A;--copper-dim:#6E4A22;
+  --signal:#5EE6D8;--signal-dim:#1C4F4B;--fail:#F0705E;
+  --display:"Syne",ui-sans-serif,system-ui,sans-serif;
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+@media (max-width:640px){.wrap{width:calc(100% - 32px)}}
+
+/* nav */
+.nav{position:fixed;inset:0 0 auto 0;z-index:40;padding-top:env(safe-area-inset-top,0px);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(11,16,22,.62);border-bottom:1px solid rgba(31,43,56,.7)}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px}
+.nav-links{display:flex;gap:22px;margin-left:8px;font-size:14.5px;color:var(--ink2)}
+.nav-links a{text-decoration:none}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:10px 16px;font-weight:500;font-size:14.5px;border:1px solid var(--line2);background:transparent;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}
+.btn:hover{background:var(--bg3);border-color:#3A4C60}
+.btn.primary{background:var(--copper);border-color:var(--copper);color:#1A1006}
+.btn.primary:hover{background:var(--copper2);border-color:var(--copper2)}
+.btn.lg{padding:14px 22px;font-size:16px}
+@media (max-width:760px){.nav-links{display:none}}
+
+/* hero */
+.hero{position:relative;min-height:min(92vh,860px);padding-block:150px 90px;overflow:hidden;isolation:isolate}
+#pcb{position:absolute;inset:0;z-index:-1;display:block;width:100%;height:100%}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:220px;background:linear-gradient(to bottom,rgba(11,16,22,0),var(--bg));z-index:-1;pointer-events:none}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);gap:40px;align-items:center}
+@media (max-width:900px){.hero .wrap{grid-template-columns:1fr}.hero{padding-block:120px 70px}}
+.kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;color:var(--signal);letter-spacing:.06em;text-transform:uppercase;margin:0 0 20px}
+.kicker i{width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 12px var(--signal);animation:blink 2.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(36px,4.9vw,60px);line-height:1.02;letter-spacing:-.025em;margin:0 0 22px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--copper2)}
+.lede{font-size:clamp(16px,1.35vw,19px);color:var(--ink2);max-width:56ch;margin:0 0 30px}
+.prompt{display:flex;align-items:center;gap:10px;background:rgba(17,25,35,.86);border:1px solid var(--line2);border-radius:12px;padding:8px 8px 8px 16px;box-shadow:0 18px 60px rgba(0,0,0,.45);max-width:640px;backdrop-filter:blur(8px)}
+.prompt .caret{font-family:var(--mono);color:var(--copper)}
+.prompt input{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;padding:10px 0;outline:none}
+.prompt input::placeholder{color:var(--ink3)}
+.prompt button{white-space:nowrap}
+.hero-foot{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:22px;font-size:13.5px;color:var(--ink2);font-family:var(--mono)}
+.hero-foot span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--copper);margin-right:8px;vertical-align:2px}
+.hero-side{display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.hero-side{display:none}}
+.tick{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;background:rgba(17,25,35,.72);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;backdrop-filter:blur(6px)}
+.tick b{font-weight:500}
+.tick small{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.tick .dot{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;color:var(--signal);font-size:12px;transition:border-color .2s,background .2s}
+.tick.on .dot{border-color:var(--signal);background:var(--signal-dim)}
+.tick.budget .dot{color:var(--copper2)}
+.tick.budget.on .dot{border-color:var(--copper);background:var(--copper-dim)}
+
+/* sections */
+section{padding-block:96px}
+@media (max-width:640px){section{padding-block:64px}}
+.sec-head{max-width:64ch;margin-bottom:44px}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(28px,3.6vw,44px);line-height:1.08;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+.sec-head p{color:var(--ink2);font-size:17px;margin:0}
+
+/* ladder + terminal */
+.verify{background:var(--bg2);border-block:1px solid var(--line)}
+.verify-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:40px;align-items:start}
+@media (max-width:900px){.verify-grid{grid-template-columns:1fr}}
+.ladder{display:flex;flex-direction:column;gap:0;position:relative}
+.rung{display:grid;grid-template-columns:44px 1fr auto;gap:16px;align-items:center;padding:16px 16px 16px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);margin-bottom:10px;transition:border-color .25s,box-shadow .25s}
+.rung .idx{width:44px;height:44px;border-radius:9px;display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:var(--ink2);background:var(--bg3);border:1px solid var(--line);transition:all .25s}
+.rung h3{margin:0 0 3px;font-size:16px;font-weight:600}
+.rung p{margin:0;color:var(--ink2);font-size:14px}
+.rung .cost{font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:6px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.rung .cost.free{color:var(--signal);border-color:var(--signal-dim)}
+.rung .cost.budget{color:var(--copper2);border-color:var(--copper-dim)}
+.rung.active{border-color:var(--copper);box-shadow:0 0 0 3px rgba(224,145,59,.14)}
+.rung.active .idx{background:var(--copper);color:#1A1006;border-color:var(--copper)}
+.rung.pass .idx{background:var(--signal-dim);color:var(--signal);border-color:var(--signal-dim)}
+.rung.fail{border-color:var(--fail)}
+.rung.fail .idx{background:rgba(240,112,94,.16);color:var(--fail);border-color:rgba(240,112,94,.4)}
+.ladder-note{margin-top:8px;font-size:14px;color:var(--ink2)}
+.term{background:#070B10;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.term-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px;color:var(--ink3)}
+.term-bar i{width:11px;height:11px;border-radius:50%;background:#2B3A4A}
+.term-bar i:nth-child(1){background:#F0705E}.term-bar i:nth-child(2){background:#E0913B}.term-bar i:nth-child(3){background:#5EE6D8}
+.term-bar span{margin-left:8px}
+.term-body{font-family:var(--mono);font-size:13.5px;line-height:1.7;padding:18px 20px;min-height:380px;white-space:pre-wrap;word-break:break-word;color:#C9D3DD}
+.term-body .c{color:var(--copper2)}
+.term-body .ok{color:var(--signal)}
+.term-body .bad{color:var(--fail)}
+.term-body .dim{color:var(--ink3)}
+.term-body .cur{display:inline-block;width:8px;height:15px;background:var(--copper);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+
+/* deliverables */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.cards{grid-template-columns:1fr}}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.card .ico{width:40px;height:40px;border-radius:9px;background:var(--bg3);border:1px solid var(--line);display:grid;place-items:center;color:var(--copper2)}
+.card h3{margin:0;font-size:18px;font-weight:600}
+.card p{margin:0;color:var(--ink2);font-size:15px}
+.card pre{margin:6px 0 0;background:#070B10;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:#C9D3DD;overflow-x:auto}
+.card pre b{color:var(--copper2);font-weight:500}
+.card pre .g{color:var(--signal)}
+.openrow{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;padding:18px 22px;border:1px dashed var(--line2);border-radius:12px;color:var(--ink2);font-size:15px}
+.openrow strong{color:var(--ink);font-weight:600}
+
+/* numbers */
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:34px}
+@media (max-width:900px){.nums{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.num b{display:block;font-family:var(--display);font-weight:800;font-size:44px;line-height:1;letter-spacing:-.02em;color:var(--copper2);font-variant-numeric:tabular-nums}
+.num span{display:block;margin-top:8px;color:var(--ink2);font-size:14.5px;max-width:22ch}
+
+/* physics */
+.phys{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+@media (max-width:900px){.phys{grid-template-columns:1fr}}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:6px;border:1px solid var(--copper-dim);color:var(--copper2);margin-bottom:16px}
+.phys ul{margin:18px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;color:var(--ink2)}
+.phys li{display:flex;gap:12px;align-items:flex-start}
+.phys li::before{content:"";flex:0 0 8px;height:8px;margin-top:8px;border-radius:50%;background:var(--copper)}
+.arm{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:20px;min-height:260px;display:grid;place-items:center}
+.arm svg{width:100%;max-width:420px;height:auto}
+.arm .j{fill:var(--copper)}
+.arm .l{stroke:var(--copper2);stroke-width:6;stroke-linecap:round;fill:none}
+.arm .t{stroke:var(--signal);stroke-width:1.5;stroke-dasharray:4 5;fill:none;opacity:.7}
+.arm .b{fill:var(--bg3);stroke:var(--line2)}
+@media (prefers-reduced-motion:no-preference){
+  .arm #upper{transform-origin:150px 190px;animation:swing 4s ease-in-out infinite}
+  .arm #fore{transform-origin:150px 90px;animation:swing2 4s ease-in-out infinite}
+}
+@keyframes swing{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(22deg)}}
+@keyframes swing2{0%,100%{transform:rotate(30deg)}50%{transform:rotate(-24deg)}}
+
+/* cta + footer */
+.cta{text-align:left;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);border-top:1px solid var(--line)}
+.cta .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:30px;align-items:center}
+@media (max-width:760px){.cta .wrap{grid-template-columns:1fr}}
+.cta h2{margin-bottom:8px}
+.cta p{margin:0;color:var(--ink2)}
+footer{padding-block:28px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink3)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center}
+footer a{color:var(--ink2);text-decoration:none}
+footer a:hover{color:var(--ink)}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(5,8,12,.72);backdrop-filter:blur(8px)}
+.modal .box{width:min(420px,100%);background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.modal h3{font-family:var(--display);font-weight:800;font-size:24px;margin:0 0 6px;letter-spacing:-.01em}
+.modal .sub{color:var(--ink2);font-size:14.5px;margin:0 0 22px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;color:var(--ink2)}
+.field input{background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:11px 12px;color:var(--ink);font:inherit;font-size:15px}
+.field input:focus{outline:none;border-color:var(--copper)}
+.modal .btn.primary{width:100%;justify-content:center;margin-top:6px}
+.or{display:flex;align-items:center;gap:12px;color:var(--ink3);font-size:12.5px;margin:18px 0 14px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.modal .btn.ghost{width:100%;justify-content:center}
+.modal .foot{margin-top:18px;font-size:13.5px;color:var(--ink2);text-align:center}
+.modal .foot a{color:var(--copper2)}
+.modal .x{position:absolute;top:14px;right:14px;background:transparent;border:0;color:var(--ink3);font-size:22px;line-height:1;padding:6px}
+.modal .box{position:relative}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="CircuitMind home">
+      <svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><rect x="6" y="6" width="14" height="14" rx="2.5" stroke="#E0913B" stroke-width="1.8"/><path d="M9 6V2M13 6V2M17 6V2M9 24v-4M13 24v-4M17 24v-4M6 9H2M6 13H2M6 17H2M24 9h-4M24 13h-4M24 17h-4" stroke="#E0913B" stroke-width="1.6" stroke-linecap="round"/><circle cx="13" cy="13" r="2.4" fill="#5EE6D8"/></svg>
+      CircuitMind
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#verify">How it verifies</a>
+      <a href="#get">What you get</a>
+      <a href="#physics">Mechanical builds</a>
+      <a href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <div class="nav-cta">
+      <button class="btn" data-open-login>Log in</button>
+      <button class="btn primary" data-open-login>Get started</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <canvas id="pcb" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <p class="kicker"><i></i>Simulator-verified electronics</p>
+      <h1>Describe it. It gets wired, coded, and <em>proven to run</em> before you see it.</h1>
+      <p class="lede">CircuitMind turns a plain-English idea into an ESP32 circuit and firmware, then runs it in a simulator. If it fails, the exact error goes back to the AI and it tries again. You only ever see a design that passed.</p>
+      <form class="prompt" id="promptForm" autocomplete="off">
+        <span class="caret">&gt;</span>
+        <input id="promptInput" type="text" aria-label="Describe what you want to build" placeholder="">
+        <button class="btn primary" type="submit">Build it</button>
+      </form>
+      <div class="hero-foot">
+        <span>ESP32 DevKit v1</span><span>Arduino framework</span><span>Runs in Wokwi</span><span>Free to use</span>
+      </div>
+    </div>
+    <div class="hero-side" aria-hidden="true">
+      <div class="tick on"><span class="dot">✓</span><b>Schema</b><small>0.0s</small></div>
+      <div class="tick on"><span class="dot">✓</span><b>Lint</b><small>0.4s</small></div>
+      <div class="tick on"><span class="dot">✓</span><b>Compile</b><small>3.1s</small></div>
+      <div class="tick on"><span class="dot">✓</span><b>Consistency</b><small>0.0s</small></div>
+      <div class="tick budget on"><span class="dot">✓</span><b>Simulate</b><small>2.0s</small></div>
+    </div>
+  </div>
+</section>
+
+<section class="verify" id="verify">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Nothing reaches you unverified.</h2>
+      <p>Every design climbs a ladder of checks, cheapest first. Four of them cost nothing. Only a design that passes all four is worth a second of simulation time, and only a design that passes simulation is shown to you.</p>
+    </div>
+    <div class="verify-grid">
+      <div>
+        <div class="ladder" id="ladder">
+          <div class="rung" data-stage="schema"><span class="idx">1</span><div><h3>Schema</h3><p>Right shape, real parts, no duplicate ids.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="lint"><span class="idx">2</span><div><h3>Lint</h3><p>Every pin name exists on every part. Wokwi's own checker.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="compile"><span class="idx">3</span><div><h3>Compile</h3><p>Builds for ESP32 with arduino-cli. Three seconds warm.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="consistency"><span class="idx">4</span><div><h3>Consistency</h3><p>The code's pin numbers match the wires. Lint doesn't check this.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="simulate"><span class="idx">5</span><div><h3>Simulate</h3><p>Runs the firmware in Wokwi and waits for the expected output.</p></div><span class="cost budget">budget</span></div>
+        </div>
+        <p class="ladder-note">Fail anywhere and the error, plus the previous attempt, goes back to the model. Three attempts, then it stops and tells you why.</p>
+      </div>
+      <div class="term" aria-live="polite">
+        <div class="term-bar"><i></i><i></i><i></i><span>circuitmind</span></div>
+        <div class="term-body" id="term"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="get">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>What you get when it passes.</h2>
+      <p>Not a chat answer. A build you can follow, in the order you'd actually do it.</p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h5l2-4 2 8 2-4h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h3>Wiring walkthrough</h3>
+        <p>Step by step, one connection at a time, with why each wire goes where it goes.</p>
+<pre><b>1.</b> LED anode (A) → resistor pin 1
+<b>2.</b> Resistor pin 2 → ESP32 <span class="g">D2</span>
+<b>3.</b> LED cathode (C) → ESP32 <span class="g">GND</span>
+<span class="dim">220 Ω keeps the LED under 20 mA.</span></pre>
+      </div>
+      <div class="card">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 5 3 10l4 5M13 5l4 5-4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h3>Annotated firmware</h3>
+        <p>The exact code that passed, commented so you can change it without breaking it.</p>
+<pre><span class="dim">// GPIO 2 drives the LED via 220 Ω</span>
+const int LED_PIN = 2;
+void loop() {
+  digitalWrite(LED_PIN, HIGH);
+  delay(500);
+  <span class="dim">// … prints "BLINK" after 2 cycles</span></pre>
+      </div>
+      <div class="card">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <h3>Parts list with prices</h3>
+        <p>Only parts that exist in the simulator, so the list you buy is the list that was tested.</p>
+<pre>ESP32 DevKit v1      ×1
+Red LED 5 mm          ×1
+Resistor 220 Ω        ×1
+Breadboard + jumpers  ×1
+<span class="dim">Approx. ₹520 from Robu / Robocraze</span></pre>
+      </div>
+    </div>
+    <div class="openrow">
+      <strong>Open the exact circuit in Wokwi.</strong> Every passed design links to the same diagram and code the simulator ran, so you can poke at it, press the buttons, and watch the serial monitor yourself.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="nums">
+      <div class="num"><b>29</b><span>parts in the catalogue, pin names pulled from the simulator's own checker</span></div>
+      <div class="num"><b>4</b><span>free checks before a single simulation second is spent</span></div>
+      <div class="num"><b>3</b><span>attempts max, then it stops and explains what went wrong</span></div>
+      <div class="num"><b>0</b><span>unverified designs ever shown to a user</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="physics">
+  <div class="wrap">
+    <div class="phys">
+      <div>
+        <span class="tag">In progress</span>
+        <h2>Mechanical builds get a second simulator.</h2>
+        <p style="color:var(--ink2);margin:0">An arm can pass every electrical check and still not reach the cup. For servos, arms and grippers, the motor signals from the first simulation drive a physics model, and three more things get checked:</p>
+        <ul>
+          <li>Does the arm actually reach where it was told to go?</li>
+          <li>Do the servos have the torque to get there under load?</li>
+          <li>Can the power supply handle every motor moving at once?</li>
+        </ul>
+      </div>
+      <div class="arm" aria-hidden="true">
+        <svg viewBox="0 0 300 220">
+          <rect class="b" x="20" y="196" width="260" height="14" rx="4"/>
+          <circle class="t" cx="150" cy="190" r="88"/>
+          <g id="upper">
+            <line class="l" x1="150" y1="190" x2="150" y2="90"/>
+            <g id="fore">
+              <line class="l" x1="150" y1="90" x2="150" y2="22"/>
+              <path class="l" d="M140 22h20M140 22l-6 12M160 22l6 12" stroke-width="4"/>
+              <circle class="j" cx="150" cy="22" r="6"/>
+            </g>
+            <circle class="j" cx="150" cy="90" r="8"/>
+          </g>
+          <circle class="j" cx="150" cy="190" r="10"/>
+          <circle cx="150" cy="190" r="4" fill="#0B1016"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <div>
+      <h2>Build something that works the first time you plug it in.</h2>
+      <p>Free while it's in development. Bring an idea, leave with a wiring guide.</p>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn primary lg" data-open-login>Get started</button>
+      <a class="btn lg" href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">View the source</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 CircuitMind · Built by Piyush Thakkar · MIT licence</span>
+    <span><a href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">GitHub</a> &nbsp;·&nbsp; <a href="https://wokwi.com" target="_blank" rel="noopener">Simulation by Wokwi</a></span>
+  </div>
+</footer>
+
+<div class="modal" id="login" hidden role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <div class="box">
+    <button class="x" data-close-login aria-label="Close">×</button>
+    <h3 id="loginTitle">Welcome back</h3>
+    <p class="sub">Sign in to open your workspace and past builds.</p>
+    <form id="loginForm">
+      <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+    <div class="or">or</div>
+    <button class="btn ghost" type="button"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="#EA4335" d="M8 6.5v3h4.2c-.2 1-1.3 3-4.2 3a4.5 4.5 0 1 1 0-9c1.3 0 2.1.5 2.6 1l1.8-1.8A7 7 0 0 0 8 1a7 7 0 1 0 0 14c4 0 6.7-2.8 6.7-6.8 0-.5 0-.8-.1-1.2H8z"/></svg>Continue with Google</button>
+    <p class="foot">New here? <a href="#" data-signup>Create an account</a></p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- hero: PCB traces with signal pulses ---------- */
+  var canvas = document.getElementById('pcb');
+  if (window.THREE && canvas) {
+    var hero = canvas.parentElement;
+    var renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true, antialias: true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    var scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x0B1016, 14, 34);
+    var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    camera.position.set(0, 9.5, 15);
+    camera.lookAt(0, 0.6, 0);
+
+    var COPPER = 0xE0913B, SIGNAL = 0x5EE6D8;
+    var EXT = 13, paths = [], linePos = [], nodePos = [];
+    var seed = 7;
+    function rnd(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    function ri(a,b){ return a + Math.floor(rnd() * (b - a + 1)); }
+
+    for (var p = 0; p < 70; p++) {
+      var x = ri(-EXT, EXT), z = ri(-EXT, EXT), pts = [[x, z]];
+      var horiz = rnd() < .5, segs = ri(3, 6);
+      for (var s = 0; s < segs; s++) {
+        var len = ri(1, 5) * (rnd() < .5 ? -1 : 1);
+        if (horiz) x = Math.max(-EXT, Math.min(EXT, x + len)); else z = Math.max(-EXT, Math.min(EXT, z + len));
+        horiz = !horiz; pts.push([x, z]);
+      }
+      var path = [], total = 0;
+      for (var i = 0; i < pts.length; i++) {
+        path.push(new THREE.Vector3(pts[i][0], 0, pts[i][1]));
+        nodePos.push(pts[i][0], 0.01, pts[i][1]);
+        if (i > 0) { linePos.push(pts[i-1][0], 0, pts[i-1][1], pts[i][0], 0, pts[i][1]); total += path[i].distanceTo(path[i-1]); }
+      }
+      if (total > 2) paths.push({pts: path, len: total});
+    }
+
+    var lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+    scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({color: COPPER, transparent: true, opacity: 0.32})));
+
+    var nodeGeo = new THREE.BufferGeometry();
+    nodeGeo.setAttribute('position', new THREE.Float32BufferAttribute(nodePos, 3));
+    scene.add(new THREE.Points(nodeGeo, new THREE.PointsMaterial({color: COPPER, size: 0.14, transparent: true, opacity: 0.85, sizeAttenuation: true})));
+
+    var grid = new THREE.GridHelper(EXT * 2 + 2, EXT * 2 + 2, 0x1F2B38, 0x16212C);
+    grid.position.y = -0.02; grid.material.transparent = true; grid.material.opacity = 0.55; scene.add(grid);
+
+    var NP = 46, pulses = [], pulsePos = new Float32Array(NP * 3);
+    for (var k = 0; k < NP; k++) pulses.push({path: ri(0, paths.length - 1), t: rnd(), v: 0.9 + rnd() * 1.4});
+    var pulseGeo = new THREE.BufferGeometry();
+    pulseGeo.setAttribute('position', new THREE.BufferAttribute(pulsePos, 3));
+    var pulseMat = new THREE.PointsMaterial({color: SIGNAL, size: 0.22, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true});
+    var glowMat = new THREE.PointsMaterial({color: SIGNAL, size: 0.7, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true});
+    scene.add(new THREE.Points(pulseGeo, pulseMat));
+    scene.add(new THREE.Points(pulseGeo, glowMat));
+
+    function posOn(path, d, out) {
+      var pts = path.pts;
+      for (var i = 1; i < pts.length; i++) {
+        var L = pts[i].distanceTo(pts[i-1]);
+        if (d <= L) { out.lerpVectors(pts[i-1], pts[i], L ? d / L : 0); return; }
+        d -= L;
+      }
+      out.copy(pts[pts.length - 1]);
+    }
+
+    var chip = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(3, 0.36, 3), new THREE.MeshBasicMaterial({color: 0x0F1720}));
+    chip.add(body);
+    chip.add(new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry), new THREE.LineBasicMaterial({color: COPPER})));
+    var pinGeo = new THREE.BoxGeometry(0.14, 0.1, 0.5), pinMat = new THREE.MeshBasicMaterial({color: COPPER});
+    for (var q = 0; q < 8; q++) {
+      var off = -1.4 + q * 0.4;
+      var a = new THREE.Mesh(pinGeo, pinMat); a.position.set(off, 0, 1.72); chip.add(a);
+      var b = new THREE.Mesh(pinGeo, pinMat); b.position.set(off, 0, -1.72); chip.add(b);
+      var c = new THREE.Mesh(pinGeo, pinMat); c.rotation.y = Math.PI / 2; c.position.set(1.72, 0, off); chip.add(c);
+      var d2 = new THREE.Mesh(pinGeo, pinMat); d2.rotation.y = Math.PI / 2; d2.position.set(-1.72, 0, off); chip.add(d2);
+    }
+    var core = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshBasicMaterial({color: SIGNAL, transparent: true, opacity: 0.18}));
+    core.rotation.x = -Math.PI / 2; core.position.y = 0.19; chip.add(core);
+    chip.position.y = 1.7; scene.add(chip);
+
+    var ringMat = new THREE.MeshBasicMaterial({color: SIGNAL, transparent: true, opacity: 0, side: THREE.DoubleSide});
+    var ring = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.0, 96), ringMat);
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; scene.add(ring);
+
+    var mouse = {x: 0, y: 0}, tmp = new THREE.Vector3();
+    window.addEventListener('pointermove', function(e){ mouse.x = (e.clientX / window.innerWidth - .5) * 2; mouse.y = (e.clientY / window.innerHeight - .5) * 2; }, {passive: true});
+
+    function resize(){
+      var w = hero.clientWidth, h = hero.clientHeight;
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize); resize();
+
+    var t0 = performance.now(), ringT = 0;
+    function frame(now){
+      var t = (now - t0) / 1000, dt = 1 / 60;
+      for (var i = 0; i < NP; i++) {
+        var pu = pulses[i], pa = paths[pu.path];
+        pu.t += pu.v * dt;
+        if (pu.t > pa.len) { pu.t = 0; pu.path = ri(0, paths.length - 1); pa = paths[pu.path]; }
+        posOn(pa, pu.t, tmp);
+        pulsePos[i*3] = tmp.x; pulsePos[i*3+1] = 0.06; pulsePos[i*3+2] = tmp.z;
+      }
+      pulseGeo.attributes.position.needsUpdate = true;
+      chip.position.y = 1.7 + Math.sin(t * 1.1) * 0.14;
+      chip.rotation.y = t * 0.12;
+      core.material.opacity = 0.12 + (Math.sin(t * 2.2) + 1) * 0.08;
+      ringT = (t % 4.2) / 4.2;
+      var sc = 1 + ringT * 14; ring.scale.set(sc, sc, sc); ringMat.opacity = ringT < .05 ? ringT * 12 : (1 - ringT) * 0.55;
+      camera.position.x += (mouse.x * 1.4 - camera.position.x) * 0.04;
+      camera.position.y += (9.5 - mouse.y * 0.8 - camera.position.y) * 0.04;
+      camera.lookAt(0, 0.6, 0);
+      renderer.render(scene, camera);
+      if (!reduce) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- prompt placeholder ---------- */
+  var input = document.getElementById('promptInput');
+  var ideas = ['a plant that texts me when it needs water', 'a robotic arm that sweeps when I press a button', 'a distance alarm that beeps when something gets close', 'a temperature display that turns red above 30 °C'];
+  if (input) {
+    if (reduce) { input.placeholder = ideas[0]; }
+    else {
+      var ii = 0, ci = 0, del = false;
+      (function tick(){
+        var s = ideas[ii];
+        if (!del) { ci++; if (ci > s.length) { del = true; return setTimeout(tick, 1800); } }
+        else { ci--; if (ci === 0) { del = false; ii = (ii + 1) % ideas.length; } }
+        input.placeholder = s.slice(0, ci);
+        setTimeout(tick, del ? 22 : 48);
+      })();
+    }
+  }
+  var pf = document.getElementById('promptForm');
+  if (pf) pf.addEventListener('submit', function(e){ e.preventDefault(); openLogin(); });
+
+  /* ---------- ladder + terminal ---------- */
+  var term = document.getElementById('term'), ladder = document.getElementById('ladder');
+  var runs = [
+    {cmd: 'circuitmind generate "blink an LED and print BLINK after two cycles"', lines: [
+      {t: 'attempt 1 of 3', c: 'dim'},
+      {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
+      {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
+      {t: 'compile       PASS   3.1s   Sketch uses 271632 bytes (20%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
+      {t: 'simulate      PASS   2.0s   wait-serial "BLINK" matched', c: 'ok', s: 'simulate', d: 1400},
+      {t: '', c: ''},
+      {t: 'outcome: VERIFIED  (attempt 1 of 3, catalogue 85454b7f)', c: 'ok'}
+    ]},
+    {cmd: 'circuitmind generate "servo arm that sweeps when the button is pressed"', lines: [
+      {t: 'attempt 1 of 3', c: 'dim'},
+      {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
+      {t: 'lint          PASS   0.5s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
+      {t: 'compile       PASS   3.4s   Sketch uses 284120 bytes (21%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'consistency   FAIL   0.0s', c: 'bad', s: 'consistency', f: true},
+      {t: '     firmware uses GPIO [5] but nothing is wired to [\'D5\']', c: 'bad'},
+      {t: '     servo1:PWM is wired to esp:D4', c: 'bad'},
+      {t: '', c: ''},
+      {t: '→ sending the error and the previous attempt back to the model', c: 'dim', d: 1200, reset: true},
+      {t: '', c: ''},
+      {t: 'attempt 2 of 3', c: 'dim'},
+      {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
+      {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
+      {t: 'compile       PASS   3.0s   Sketch uses 284104 bytes (21%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
+      {t: 'simulate      PASS   3.2s   set-control btn1.pressed=1, wait-serial "SWEEP" matched', c: 'ok', s: 'simulate', d: 1500},
+      {t: '', c: ''},
+      {t: 'outcome: VERIFIED  (attempt 2 of 3, catalogue 85454b7f)', c: 'ok'}
+    ]}
+  ];
+  function setStage(stage, cls){
+    if (!ladder) return;
+    var r = ladder.querySelector('[data-stage="' + stage + '"]');
+    if (!r) return;
+    r.classList.remove('active', 'pass', 'fail');
+    if (cls) r.classList.add(cls);
+  }
+  function resetLadder(){ if (ladder) ladder.querySelectorAll('.rung').forEach(function(r){ r.classList.remove('active','pass','fail'); }); }
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  if (term) {
+    if (reduce) {
+      var r0 = runs[0];
+      term.innerHTML = '<span class="c">$ ' + esc(r0.cmd) + '</span>\n' + r0.lines.map(function(l){ return '<span class="' + l.c + '">' + esc(l.t) + '</span>'; }).join('\n');
+      ['schema','lint','compile','consistency','simulate'].forEach(function(s){ setStage(s, 'pass'); });
+    } else {
+      var ri2 = 0;
+      function runOne(){
+        var run = runs[ri2]; resetLadder();
+        term.innerHTML = '<span class="c">$ </span><span id="cmd"></span><span class="cur"></span>';
+        var cmdEl = document.getElementById('cmd'), n = 0;
+        (function typeCmd(){
+          if (n <= run.cmd.length) { cmdEl.textContent = run.cmd.slice(0, n++); return setTimeout(typeCmd, 26); }
+          var cur = term.querySelector('.cur'); if (cur) cur.remove();
+          var li = 0;
+          (function next(){
+            if (li >= run.lines.length) { setTimeout(function(){ ri2 = (ri2 + 1) % runs.length; runOne(); }, 3400); return; }
+            var l = run.lines[li++];
+            if (l.reset) resetLadder();
+            if (l.s) setStage(l.s, 'active');
+            setTimeout(function(){
+              term.innerHTML += '\n<span class="' + l.c + '">' + esc(l.t) + '</span>';
+              if (l.s) setStage(l.s, l.f ? 'fail' : 'pass');
+              term.scrollTop = term.scrollHeight;
+              next();
+            }, l.d || (l.s ? 420 : 160));
+          })();
+        })();
+      }
+      runOne();
+    }
+  }
+
+  /* ---------- login modal ---------- */
+  var modal = document.getElementById('login');
+  function openLogin(){ if (!modal) return; modal.hidden = false; var f = modal.querySelector('input'); if (f) setTimeout(function(){ f.focus(); }, 30); }
+  function closeLogin(){ if (modal) modal.hidden = true; }
+  document.querySelectorAll('[data-open-login]').forEach(function(b){ b.addEventListener('click', openLogin); });
+  document.querySelectorAll('[data-close-login]').forEach(function(b){ b.addEventListener('click', closeLogin); });
+  if (modal) {
+    modal.addEventListener('click', function(e){ if (e.target === modal) closeLogin(); });
+    var lf = document.getElementById('loginForm'); if (lf) lf.addEventListener('submit', function(e){ e.preventDefault(); closeLogin(); });
+    var su = modal.querySelector('[data-signup]'); if (su) su.addEventListener('click', function(e){ e.preventDefault(); });
+  }
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeLogin(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    { "id": "led1", "type": "wokwi-led", "attrs": { "color": "red" } },
+    { "id": "r1", "type": "wokwi-resistor", "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    ["led1:A", "r1:1"],
+    ["r1:2", "esp:D2"],
+    ["led1:C", "esp:GND.1"]
+  ],
+  "firmware": "const int LED_PIN = 2;\nint cycles = 0;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED_PIN, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(LED_PIN, HIGH);\n  delay(500);\n  digitalWrite(LED_PIN, LOW);\n  delay(500);\n  cycles++;\n  if (cycles == 2) {\n    Serial.println(\"BLINK\");\n  }\n}\n",
+  "status_line": "BLINK",
+  "explanation": "LED anode through a 220 ohm resistor to GPIO 2, cathode to ground. Toggle every 500 ms; report after two cycles."
+}
