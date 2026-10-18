@@ -164,3 +164,56 @@ def generate(
         for a, b in d.connections:
             typer.echo(f"  {a}  ->  {b}")
     raise typer.Exit(0 if res.passed else 1)
+
+
+@app.command()
+def bench(
+    config: str = typer.Argument(..., help="A, B, C or D."),
+    provider: str = typer.Option("gemini", help="Model provider."),
+    only: str = typer.Option(None, help="Comma-separated task ids to run; default all."),
+    results: Path = typer.Option(ROOT / "benchmark" / "results", help="Where results JSON goes."),
+) -> None:
+    """Run one benchmark configuration across the task suite."""
+    from .bench import CONFIGS, load_tasks, run_task, summary_table, write_results
+
+    config = config.upper()
+    if config not in CONFIGS:
+        raise typer.BadParameter("config must be A, B, C or D")
+    if not os.environ.get("WOKWI_CLI_TOKEN"):
+        raise typer.BadParameter("bench needs WOKWI_CLI_TOKEN; every config simulates at least once per task")
+    cat = cat_mod.load()
+    prov = get_provider(provider)
+    tasks = load_tasks(TASKS, only.split(",") if only else None)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    cfg = CONFIGS[config]
+    typer.echo(f"config {config}: grounded={cfg['grounded']} feedback={cfg['use_feedback']} "
+               f"attempts={cfg['max_attempts']} sim_in_loop={cfg['sim_in_loop']}")
+    typer.echo(f"model {getattr(prov, 'model', prov.name)}, {len(tasks)} tasks, catalogue {cat.hash}")
+    typer.echo("")
+    rows = []
+    for t, tdir in tasks:
+        typer.echo(f"{t['id']}", nl=False)
+        wd = RUNS / "bench" / stamp / config / t["id"]
+        marks: list[str] = []
+
+        def ev(kind, p, marks=marks):
+            if kind == "attempt.done":
+                marks.append("ok" if p["passed"] else p["failed_rung"])
+            elif kind == "final_sim":
+                marks.append("sim-ok" if p["passed"] else "sim-fail")
+
+        try:
+            r = run_task(config, t, tdir, prov, cat, wd, on_event=ev)
+        except Exception as e:  # noqa: BLE001 - one task must not kill the sweep
+            from .bench import TaskResult
+            r = TaskResult(task_id=t["id"], passed=False, attempts=0, failed_rung="error",
+                           tokens_in=0, tokens_out=0, sim_ms=0, seconds=0.0)
+            marks.append(f"error: {str(e)[:80]}")
+        rows.append(r)
+        typer.echo(f"  {'PASS' if r.passed else 'FAIL':4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
+                   f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
+    p = write_results(results, config, getattr(prov, "model", prov.name), cat.hash, rows)
+    typer.echo("")
+    typer.echo(f"{sum(r.passed for r in rows)}/{len(rows)} passed. wrote {p}")
+    typer.echo("")
+    typer.echo(summary_table(results))

@@ -7,9 +7,8 @@ steps:
       part-id: btn1
       control: pressed
       value: 1
-  - delay: 150ms
+  - wait-serial: "PRESSED"
   - set-control:
       part-id: btn1
       control: pressed
       value: 0
-  - wait-serial: "PRESSED"

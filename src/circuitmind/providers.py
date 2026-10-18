@@ -144,15 +144,18 @@ class GeminiProvider:
         req = urllib.request.Request(
             self.URL.format(model=self.model),
             data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json", "X-goog-api-key": self.api_key},
+            headers={"Content-Type": "application/json", "X-goog-api-key": self.api_key,
+                     "User-Agent": "circuitmind/0.1"},
             method="POST",
         )
         self.pacer.wait()
         t0 = time.time()
+        last_err: Exception | None = None
         for attempt in range(4):
             try:
-                with urllib.request.urlopen(req, timeout=120) as r:
+                with urllib.request.urlopen(req, timeout=180) as r:
                     data = json.loads(r.read())
+                last_err = None
                 break
             except urllib.error.HTTPError as e:
                 text = e.read().decode(errors="replace")
@@ -162,6 +165,13 @@ class GeminiProvider:
                     time.sleep(2 ** attempt + 1)
                     continue
                 raise RuntimeError(f"Gemini HTTP {e.code}: {text[:400]}") from e
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                last_err = e
+                if attempt < 3:
+                    time.sleep(2 ** attempt + 1)
+                    continue
+        if last_err is not None:
+            raise RuntimeError(f"Gemini request failed after retries: {last_err}") from last_err
         latency = time.time() - t0
         try:
             text = data["candidates"][0]["content"]["parts"][0]["text"]
@@ -178,6 +188,97 @@ class GeminiProvider:
         except json.JSONDecodeError:
             wire = {}
         return ModelReply(wire=wire, raw=text, usage=usage, model=self.model)
+
+
+class OpenAICompatProvider:
+    """Any OpenAI-style chat endpoint: Groq, OpenRouter, Gemini's compat layer.
+
+    Uses JSON mode with the schema stated in the prompt, then validates with
+    Pydantic downstream. json_schema mode is used when the server accepts it.
+    """
+
+    name = "openai-compat"
+
+    def __init__(self, base_url: str, api_key: str, model: str, rpm: float = 20.0, label: str = "openai-compat"):
+        if not api_key:
+            raise RuntimeError(f"API key for {label} is not set")
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.model = model
+        self.name = label
+        self.pacer = Pacer(rpm)
+        self._schema_ok: bool | None = None
+
+    def _post(self, body: dict) -> dict:
+        req = urllib.request.Request(
+            self.base_url + "/chat/completions",
+            data=json.dumps(body).encode(),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}",
+                     "User-Agent": "circuitmind/0.1"},
+            method="POST",
+        )
+        last_err: Exception | None = None
+        for attempt in range(4):
+            try:
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    return json.loads(r.read())
+            except urllib.error.HTTPError as e:
+                text = e.read().decode(errors="replace")
+                if e.code == 400 and "json_schema" in json.dumps(body) and "schema" in text.lower():
+                    raise _SchemaUnsupported(text)
+                if e.code == 429 and ("per day" in text.lower() or "daily" in text.lower()):
+                    raise RuntimeError(f"{self.name} daily quota exhausted: {text[:200]}") from e
+                if e.code in (429, 500, 502, 503) and attempt < 3:
+                    time.sleep(2 ** attempt + 1)
+                    continue
+                raise RuntimeError(f"{self.name} HTTP {e.code}: {text[:400]}") from e
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                last_err = e
+                if attempt < 3:
+                    time.sleep(2 ** attempt + 1)
+                    continue
+        raise RuntimeError(f"{self.name} request failed after retries: {last_err}")
+
+    def generate(self, system: str, user: str) -> ModelReply:
+        schema_note = ("\n\nRespond with a single JSON object and nothing else. It must match this JSON schema:\n"
+                       + json.dumps(WIRE_SCHEMA))
+        messages = [{"role": "system", "content": system + schema_note}, {"role": "user", "content": user}]
+        self.pacer.wait()
+        t0 = time.time()
+        body = {"model": self.model, "messages": messages, "temperature": 0}
+        if self._schema_ok is not False:
+            body["response_format"] = {"type": "json_schema",
+                                       "json_schema": {"name": "design", "schema": WIRE_SCHEMA}}
+        try:
+            data = self._post(body)
+            if self._schema_ok is None:
+                self._schema_ok = True
+        except _SchemaUnsupported:
+            self._schema_ok = False
+            body["response_format"] = {"type": "json_object"}
+            data = self._post(body)
+        latency = time.time() - t0
+        try:
+            text = data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as e:
+            raise RuntimeError(f"{self.name} returned no text: {json.dumps(data)[:400]}") from e
+        u = data.get("usage", {})
+        usage = Usage(tokens_in=int(u.get("prompt_tokens", 0)), tokens_out=int(u.get("completion_tokens", 0)),
+                      latency_s=latency)
+        text_clean = text.strip()
+        if text_clean.startswith("```"):
+            text_clean = text_clean.strip("`")
+            if text_clean.lower().startswith("json"):
+                text_clean = text_clean[4:]
+        try:
+            wire = json.loads(text_clean)
+        except json.JSONDecodeError:
+            wire = {}
+        return ModelReply(wire=wire, raw=text, usage=usage, model=self.model)
+
+
+class _SchemaUnsupported(Exception):
+    pass
 
 
 class MockProvider:
@@ -198,4 +299,14 @@ class MockProvider:
 def get_provider(name: str) -> Provider:
     if name == "gemini":
         return GeminiProvider()
+    if name == "groq":
+        return OpenAICompatProvider(
+            "https://api.groq.com/openai/v1", os.environ.get("GROQ_API_KEY", ""),
+            os.environ.get("CIRCUITMIND_MODEL", "openai/gpt-oss-120b"),
+            rpm=float(os.environ.get("CIRCUITMIND_MODEL_RPM", "20")), label="groq")
+    if name == "openrouter":
+        return OpenAICompatProvider(
+            "https://openrouter.ai/api/v1", os.environ.get("OPENROUTER_API_KEY", ""),
+            os.environ.get("CIRCUITMIND_MODEL", "openai/gpt-oss-120b:free"),
+            rpm=float(os.environ.get("CIRCUITMIND_MODEL_RPM", "10")), label="openrouter")
     raise ValueError(f"unknown provider {name!r}")

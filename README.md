@@ -13,19 +13,30 @@ Turns a plain-English electronics project into a circuit and firmware, then prov
 
 ## Status
 
-The model is in the loop. `circuitmind generate` asks Gemini for a design, runs it up the ladder, and on failure sends the exact error and the previous attempt back for another try. Real runs are in `docs/demo-runs.md`, including one where the model needed three attempts and the feedback fixed it each time.
+The loop works end to end, simulation included, and the first benchmark has been run.
 
-Five benchmark tasks exist with reference solutions that pass every free check. The simulation rung is wired up and untested against a live token. Next: token, then the four-version benchmark.
+| Version | What it has | Passed (5 tasks) |
+|---|---|---|
+| A | bare model | 1 |
+| B | + parts catalogue in the prompt | 3 |
+| C | + retry on schema, lint, compile, consistency errors | 3 |
+| D | + retry on simulation errors too | 5 |
+
+Model: `openai/gpt-oss-120b` on Groq's free tier. Full table, per-task matrix and caveats in `benchmark/results/README.md`. Five tasks is a pilot; the suite is being extended toward 25.
+
+What that table shows: without the catalogue the model invents pin names. With it, most designs pass. Retrying on compile errors alone did not move the total, because the one wrong design in C passed every free check and only failed when it actually ran. Retrying on what the simulator saw got all five.
 
 ## Layout
 
 ```
 benchmark/tasks/     one folder per task: task.yaml, scenario.yaml, reference/
+benchmark/results/   README.md with the table, plus one JSON per configuration
 catalogue/parts.json part types and their valid pins, extracted from wokwi-cli lint
 docs/                demo-runs.md, real transcripts from the loop
 src/circuitmind/     ir.py (the design schema), expand.py (schema to diagram.json),
-                     catalogue.py, prompt.py, providers.py (Gemini, mock),
-                     loop.py (generate, check, correct), harness/ (the ladder), cli.py
+                     catalogue.py, prompt.py, providers.py (Gemini, Groq, OpenRouter, mock),
+                     loop.py (generate, check, correct), bench.py (the four configurations),
+                     harness/ (the ladder), cli.py
 tools/               extract_catalogue.py, setup_toolchain.sh
 tests/               unit tests, no simulation, no network
 web/                 landing page
@@ -40,15 +51,22 @@ pip install -e ".[dev]"
 circuitmind tasks
 circuitmind reference T01_blink --no-simulate     # free rungs only, no model
 
-export GEMINI_API_KEY=...                          # free key from aistudio.google.com
-circuitmind generate "blink an LED twice then print BLINK"
-circuitmind generate - --task T03_servo_sweep      # use a benchmark task's prompt
+export GROQ_API_KEY=gsk_...                        # free key from console.groq.com
+circuitmind generate "blink an LED twice then print BLINK" --provider groq
+circuitmind generate - --task T03_servo_sweep --provider groq   # use a benchmark task's prompt
+# or GEMINI_API_KEY with --provider gemini (free tier is 20 requests a day on the model tested)
 
 export WOKWI_CLI_TOKEN=wok_...                     # from https://wokwi.com/dashboard/ci
 circuitmind generate - --task T01_blink --simulate # full ladder, spends simulated seconds
 ```
 
 Flags on `generate`: `--attempts N` (default 3), `--no-grounded` (leave the catalogue out of the prompt), `--no-feedback` (retry without sending the error back). Those two switches are what the benchmark's four versions are built from.
+
+Run the benchmark:
+
+```
+circuitmind bench A --provider groq      # then B, C, D
+```
 
 Or with Docker, which bakes the toolchain and a warm build cache:
 

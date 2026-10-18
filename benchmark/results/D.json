@@ -1,0 +1,65 @@
+{
+  "config": "D",
+  "model": "openai/gpt-oss-120b",
+  "catalogue": "85454b7fb8120f48",
+  "when": "2026-10-18 06:44:46",
+  "tasks": 5,
+  "passed": 5,
+  "pass_rate": 1.0,
+  "mean_attempts_on_pass": 1.6,
+  "sim_ms_total": 29000,
+  "tokens_in": 23176,
+  "tokens_out": 9902,
+  "rows": [
+    {
+      "task_id": "T01_blink",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2325,
+      "tokens_out": 971,
+      "sim_ms": 5000,
+      "seconds": 23.093859910964966
+    },
+    {
+      "task_id": "T02_button_serial",
+      "passed": true,
+      "attempts": 3,
+      "failed_rung": "",
+      "tokens_in": 8410,
+      "tokens_out": 3134,
+      "sim_ms": 6000,
+      "seconds": 51.723392486572266
+    },
+    {
+      "task_id": "T03_servo_sweep",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2320,
+      "tokens_out": 879,
+      "sim_ms": 8000,
+      "seconds": 29.444367170333862
+    },
+    {
+      "task_id": "T04_ultrasonic_distance",
+      "passed": true,
+      "attempts": 2,
+      "failed_rung": "",
+      "tokens_in": 7791,
+      "tokens_out": 3077,
+      "sim_ms": 5000,
+      "seconds": 40.07075333595276
+    },
+    {
+      "task_id": "T05_rgb_cycle",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2330,
+      "tokens_out": 1841,
+      "sim_ms": 5000,
+      "seconds": 21.58919072151184
+    }
+  ]
+}

@@ -56,3 +56,12 @@ Request: task T05 prompt. Passed all four free rungs on the first attempt. Three
 - The model can produce a valid design in the exact format the checker expects. This was the main open risk in the design document and it is now closed.
 - The retry loop works on real failures, not just scripted ones.
 - Compile is the slow rung at about 13 s cold per attempt; everything else is under half a second.
+
+## Later the same day: simulation rung, quotas, and the first benchmark
+
+- First full-ladder pass with a real Wokwi token: T01 reference, simulate rung 5.5 s wall including upload. No `$serialMonitor` wiring needed on the ESP32 DevKit v1; serial is captured without it.
+- `wait-serial` ends the run as soon as the text matches: a run with a 30 s timeout finished in 4.1 s wall. Budget is charged for simulated time used, not the ceiling.
+- All five task references pass the full ladder including simulation.
+- The T02 scenario had the check after the button release; the model's design printed PRESSED and the scenario still missed it. The reference did too. Scenario fixed to listen before the press. A task is only as good as its scenario.
+- Gemini free tier: 20 requests per day on `gemini-flash-latest`. Enough for a demo, not for a four-configuration sweep. The sweep moved to Groq (`openai/gpt-oss-120b`), where the model also answers in about 3 s instead of 8 to 30.
+- Full results in `benchmark/results/README.md`.

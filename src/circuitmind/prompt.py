@@ -17,7 +17,7 @@ Rules you must follow:
 - Every LED needs a series resistor (wokwi-resistor, value "220").
 - On this board, D34, D35, VN and VP are input-only. Do not drive outputs on them.
 - Firmware is a complete Arduino sketch with setup() and loop(). Call Serial.begin(115200) in setup().
-- The firmware must print the status_line to Serial, exactly, once the requested behaviour has been demonstrated. Keep the status line short, uppercase, no spaces where possible (for example BLINK, PRESSED, DIST=42).
+- The firmware must print the status_line to Serial, exactly, once the requested behaviour has been demonstrated. Keep the status line short and uppercase, for example BLINK or PRESSED. For a reading, make the status line the fixed prefix only, for example DIST=, and print the value after it.
 - GPIO numbers in the firmware must match the board pins you wired. Pin D2 is GPIO 2, D4 is GPIO 4, and so on.
 - Prefer libraries available in the Arduino Library Manager. For servos on ESP32 use the ESP32Servo library.
 - Keep the design as simple as the request allows. No extra parts.
