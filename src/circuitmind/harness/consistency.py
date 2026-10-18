@@ -17,9 +17,8 @@ _CALL_RE = re.compile(
     r"\b(pinMode|digitalWrite|digitalRead|analogRead|analogWrite|ledcAttachPin|ledcAttach|tone)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*|\d+)"
 )
 _DEFINE_RE = re.compile(r"#define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\b")
-_CONST_RE = re.compile(
-    r"\b(?:const\s+)?(?:int|uint8_t|byte|unsigned\s+int)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\d+)\s*;"
-)
+_DECL_RE = re.compile(r"\b(?:const\s+)?(?:int|uint8_t|byte|unsigned\s+int)\s+([^;{}]*);")
+_ASSIGN_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\d+)")
 
 
 def _gpio_literals(firmware: str) -> tuple[set[int], bool]:
@@ -27,8 +26,9 @@ def _gpio_literals(firmware: str) -> tuple[set[int], bool]:
     names: dict[str, int] = {}
     for m in _DEFINE_RE.finditer(firmware):
         names[m.group(1)] = int(m.group(2))
-    for m in _CONST_RE.finditer(firmware):
-        names[m.group(1)] = int(m.group(2))
+    for m in _DECL_RE.finditer(firmware):
+        for a in _ASSIGN_RE.finditer(m.group(1)):
+            names[a.group(1)] = int(a.group(2))
 
     used: set[int] = set()
     resolved = True

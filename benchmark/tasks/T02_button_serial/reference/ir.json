@@ -1,0 +1,13 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    { "id": "btn1", "type": "wokwi-pushbutton", "attrs": { "color": "green" } }
+  ],
+  "connections": [
+    ["btn1:1.l", "esp:D4"],
+    ["btn1:2.l", "esp:GND.1"]
+  ],
+  "firmware": "const int BTN = 4;\nint last = HIGH;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(BTN, INPUT_PULLUP);\n}\n\nvoid loop() {\n  int now = digitalRead(BTN);\n  if (last == HIGH && now == LOW) {\n    delay(30);\n    if (digitalRead(BTN) == LOW) {\n      Serial.println(\"PRESSED\");\n    }\n  }\n  last = now;\n  delay(5);\n}\n",
+  "status_line": "PRESSED",
+  "explanation": "Button between GPIO 4 and ground with the internal pull-up. Falling edge with a short debounce prints PRESSED."
+}

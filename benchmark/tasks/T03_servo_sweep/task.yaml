@@ -1,0 +1,11 @@
+id: T03_servo_sweep
+category: displays_actuators
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Drive a hobby servo from the ESP32. Sweep it from 0 to 180 degrees and back
+  to 0 once, then print SWEEP to the serial monitor at 115200 baud.
+status_line: SWEEP
+timeout_ms: 8000
+notes: >
+  Tests PWM-capable pin choice, servo power wiring, and library use
+  (ESP32Servo). A full sweep at 15 ms per step is about 2.7 simulated seconds.

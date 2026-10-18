@@ -1,0 +1,15 @@
+name: T02_button_serial
+version: 1
+author: circuitmind
+steps:
+  - delay: 1000ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - delay: 150ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+  - wait-serial: "PRESSED"

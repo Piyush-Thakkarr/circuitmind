@@ -13,30 +13,42 @@ Turns a plain-English electronics project into a circuit and firmware, then prov
 
 ## Status
 
-Week 1. The validation ladder works end to end on a hand-written reference solution. No model is wired in yet. See `docs/` for the design.
+The model is in the loop. `circuitmind generate` asks Gemini for a design, runs it up the ladder, and on failure sends the exact error and the previous attempt back for another try. Real runs are in `docs/demo-runs.md`, including one where the model needed three attempts and the feedback fixed it each time.
+
+Five benchmark tasks exist with reference solutions that pass every free check. The simulation rung is wired up and untested against a live token. Next: token, then the four-version benchmark.
 
 ## Layout
 
 ```
 benchmark/tasks/     one folder per task: task.yaml, scenario.yaml, reference/
 catalogue/parts.json part types and their valid pins, extracted from wokwi-cli lint
+docs/                demo-runs.md, real transcripts from the loop
 src/circuitmind/     ir.py (the design schema), expand.py (schema to diagram.json),
-                     catalogue.py, harness/ (lint, compile, consistency, simulate, ladder), cli.py
-tools/               extract_catalogue.py
-tests/               unit tests, no simulation
+                     catalogue.py, prompt.py, providers.py (Gemini, mock),
+                     loop.py (generate, check, correct), harness/ (the ladder), cli.py
+tools/               extract_catalogue.py, setup_toolchain.sh
+tests/               unit tests, no simulation, no network
+web/                 landing page
 ```
 
 ## Running
 
-Requires Python 3.11+, `arduino-cli` with the ESP32 core, and `wokwi-cli`.
+Requires Python 3.11+, `arduino-cli` with the ESP32 core, and `wokwi-cli`. `tools/setup_toolchain.sh` installs all of it.
 
 ```
 pip install -e ".[dev]"
 circuitmind tasks
-circuitmind reference T01_blink --no-simulate     # free rungs only
+circuitmind reference T01_blink --no-simulate     # free rungs only, no model
+
+export GEMINI_API_KEY=...                          # free key from aistudio.google.com
+circuitmind generate "blink an LED twice then print BLINK"
+circuitmind generate - --task T03_servo_sweep      # use a benchmark task's prompt
+
 export WOKWI_CLI_TOKEN=wok_...                     # from https://wokwi.com/dashboard/ci
-circuitmind reference T01_blink                    # full ladder, spends ~5 simulated seconds
+circuitmind generate - --task T01_blink --simulate # full ladder, spends simulated seconds
 ```
+
+Flags on `generate`: `--attempts N` (default 3), `--no-grounded` (leave the catalogue out of the prompt), `--no-feedback` (retry without sending the error back). Those two switches are what the benchmark's four versions are built from.
 
 Or with Docker, which bakes the toolchain and a warm build cache:
 

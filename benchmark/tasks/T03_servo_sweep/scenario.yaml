@@ -1,0 +1,5 @@
+name: T03_servo_sweep
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "SWEEP"

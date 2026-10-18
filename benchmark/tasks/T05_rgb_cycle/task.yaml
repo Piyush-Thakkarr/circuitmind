@@ -1,0 +1,12 @@
+id: T05_rgb_cycle
+category: output_basics
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a common-cathode RGB LED to the ESP32 with a resistor on each colour
+  pin. Cycle red, green, blue, each for 300 ms. After one full cycle print RGB
+  to the serial monitor at 115200 baud.
+status_line: RGB
+timeout_ms: 5000
+notes: >
+  Tests multi-part wiring: three resistors, four connections to one component,
+  common pin to ground.

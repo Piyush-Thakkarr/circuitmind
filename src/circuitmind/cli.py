@@ -9,9 +9,14 @@ from pathlib import Path
 import typer
 import yaml
 
+import os
+import time
+
 from . import catalogue as cat_mod
 from .harness import run_ladder
 from .ir import Design
+from .loop import run_generation
+from .providers import get_provider
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -85,3 +90,77 @@ def catalogue() -> None:
     cat = cat_mod.load()
     typer.echo(f"# catalogue snapshot {cat.hash}, {len(cat.parts)} parts")
     typer.echo(cat.prompt_block())
+
+
+@app.command()
+def generate(
+    request: str = typer.Argument(..., help="What to build, in plain English."),
+    task: str = typer.Option(None, help="Benchmark task id; uses its scenario and timeout for simulation."),
+    provider: str = typer.Option("gemini", help="Model provider."),
+    attempts: int = typer.Option(3, help="Maximum attempts."),
+    simulate: bool = typer.Option(False, help="Run the simulation rung (needs WOKWI_CLI_TOKEN, spends budget)."),
+    grounded: bool = typer.Option(True, help="Include the part catalogue in the prompt."),
+    feedback: bool = typer.Option(True, help="Send failures back to the model on retry."),
+    serial_monitor: bool = typer.Option(False, help="Inject $serialMonitor connections."),
+) -> None:
+    """Generate a design from REQUEST and verify it, retrying on failure."""
+    cat = cat_mod.load()
+    scenario = None
+    timeout_ms = 5000
+    if task:
+        t, tdir = _load_task(task)
+        scenario = tdir / "scenario.yaml"
+        timeout_ms = int(t["timeout_ms"])
+        if request.strip() == "-":
+            request = t["prompt"]
+    if simulate and scenario is None:
+        raise typer.BadParameter("--simulate needs --task so there is a scenario to assert against")
+    if simulate and not os.environ.get("WOKWI_CLI_TOKEN"):
+        raise typer.BadParameter("--simulate needs WOKWI_CLI_TOKEN in the environment")
+
+    prov = get_provider(provider)
+    workdir = RUNS / "generate" / time.strftime("%Y%m%d-%H%M%S")
+    typer.echo(f"request:  {request.strip()}")
+    typer.echo(f"model:    {getattr(prov, 'model', prov.name)}   catalogue: {cat.hash}   attempts: {attempts}")
+    typer.echo("")
+
+    def on_event(kind, p):
+        if kind == "model.start":
+            typer.echo(f"attempt {p['attempt']}")
+            typer.echo("  asking model ...", nl=False)
+        elif kind == "model.done":
+            typer.echo(f" {p['latency_s']:.1f}s  ({p['tokens_in']} in / {p['tokens_out']} out)")
+        elif kind == "rung":
+            mark = "PASS" if p["passed"] else "FAIL"
+            typer.echo(f"  {p['rung']:12} {mark}  {p['seconds']:5.1f}s  {p['summary']}")
+        elif kind == "attempt.done":
+            if not p["passed"]:
+                typer.echo(f"  -> failed at {p['failed_rung']}; sending feedback to model")
+            typer.echo("")
+
+    res = run_generation(request, prov, cat, workdir, max_attempts=attempts, simulate=simulate,
+                         scenario=scenario, timeout_ms=timeout_ms, grounded=grounded,
+                         use_feedback=feedback, inject_serial_monitor=serial_monitor, on_event=on_event)
+
+    fin = res.final
+    if fin and not fin.passed and fin.outcome.results:
+        last = fin.outcome.results[-1]
+        typer.echo("last error:")
+        for line in last.detail.splitlines()[:8]:
+            typer.echo(f"  {line}")
+        typer.echo("")
+    tin, tout = res.tokens()
+    verdict = "VERIFIED" if res.passed else "NOT VERIFIED"
+    typer.echo(f"outcome: {verdict}  after {len(res.attempts)} attempt(s)   tokens {tin} in / {tout} out")
+    typer.echo(f"run dir: {workdir}")
+    if res.passed and fin and fin.design:
+        d = fin.design
+        typer.echo("")
+        typer.echo("parts:")
+        for p in d.parts:
+            a = ", ".join(f"{k}={v}" for k, v in p.attrs.items())
+            typer.echo(f"  {p.id:10} {p.type:34} {a}")
+        typer.echo("wiring:")
+        for a, b in d.connections:
+            typer.echo(f"  {a}  ->  {b}")
+    raise typer.Exit(0 if res.passed else 1)

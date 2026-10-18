@@ -46,3 +46,11 @@ def test_output_on_input_only_pin_blocks():
                 [["led1:A", "esp:D34"], ["led1:C", "esp:GND.1"]])
     r = run_consistency(d, CAT)
     assert not r.passed and "input-only" in r.detail
+
+
+def test_comma_separated_declarations_resolve():
+    d = _design('const int R = 25, G = 26, B = 27;\nvoid setup(){pinMode(R,OUTPUT);pinMode(G,OUTPUT);pinMode(B,OUTPUT);} void loop(){Serial.println("OK");}',
+                [["led1:A", "esp:D25"], ["led1:C", "esp:GND.1"]])
+    r = run_consistency(d, CAT)
+    assert r.extra["resolved"] is True
+    assert not r.passed and "GPIO [26, 27]" in r.detail

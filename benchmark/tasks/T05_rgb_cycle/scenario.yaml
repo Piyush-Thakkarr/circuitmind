@@ -1,0 +1,5 @@
+name: T05_rgb_cycle
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "RGB"

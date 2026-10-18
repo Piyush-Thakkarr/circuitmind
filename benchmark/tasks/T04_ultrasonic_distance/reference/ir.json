@@ -1,0 +1,15 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    { "id": "us1", "type": "wokwi-hc-sr04", "attrs": {} }
+  ],
+  "connections": [
+    ["us1:VCC", "esp:VIN"],
+    ["us1:GND", "esp:GND.1"],
+    ["us1:TRIG", "esp:D5"],
+    ["us1:ECHO", "esp:D18"]
+  ],
+  "firmware": "const int TRIG = 5;\nconst int ECHO = 18;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(TRIG, OUTPUT);\n  pinMode(ECHO, INPUT);\n}\n\nvoid loop() {\n  digitalWrite(TRIG, LOW);\n  delayMicroseconds(2);\n  digitalWrite(TRIG, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(TRIG, LOW);\n  long us = pulseIn(ECHO, HIGH, 30000);\n  long cm = us / 58;\n  Serial.print(\"DIST=\");\n  Serial.println(cm);\n  delay(500);\n}\n",
+  "status_line": "DIST=",
+  "explanation": "TRIG on GPIO 5, ECHO on GPIO 18. Ten microsecond pulse, time the echo, divide by 58 for centimetres."
+}

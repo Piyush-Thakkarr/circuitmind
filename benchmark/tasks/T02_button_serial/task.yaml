@@ -1,0 +1,12 @@
+id: T02_button_serial
+category: inputs
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a pushbutton to the ESP32 using the internal pull-up resistor. When
+  the button is pressed, print the word PRESSED to the serial monitor at
+  115200 baud, once per press.
+status_line: PRESSED
+timeout_ms: 6000
+notes: >
+  First task that needs scenario input. The scenario presses the button after
+  one second. Tests INPUT_PULLUP wiring (button to ground) and debouncing.

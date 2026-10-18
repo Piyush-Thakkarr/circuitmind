@@ -1,0 +1,14 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    { "id": "servo1", "type": "wokwi-servo", "attrs": {} }
+  ],
+  "connections": [
+    ["servo1:PWM", "esp:D18"],
+    ["servo1:V+", "esp:VIN"],
+    ["servo1:GND", "esp:GND.1"]
+  ],
+  "firmware": "#include <ESP32Servo.h>\n\nServo servo1;\nconst int SERVO_PIN = 18;\nbool done = false;\n\nvoid setup() {\n  Serial.begin(115200);\n  servo1.attach(SERVO_PIN);\n}\n\nvoid loop() {\n  if (done) return;\n  for (int a = 0; a <= 180; a += 2) { servo1.write(a); delay(15); }\n  for (int a = 180; a >= 0; a -= 2) { servo1.write(a); delay(15); }\n  Serial.println(\"SWEEP\");\n  done = true;\n}\n",
+  "status_line": "SWEEP",
+  "explanation": "Servo signal on GPIO 18, powered from VIN. One sweep up and back, then SWEEP."
+}

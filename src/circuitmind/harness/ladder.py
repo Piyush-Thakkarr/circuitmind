@@ -59,12 +59,15 @@ def run_ladder(
     timeout_ms: int,
     simulate: bool = True,
     inject_serial_monitor: bool = False,
+    on_rung=None,
 ) -> LadderOutcome:
     out = LadderOutcome()
     workdir.mkdir(parents=True, exist_ok=True)
+    notify = on_rung or (lambda r: None)
 
     r = _schema_rung(design, cat)
     out.results.append(r)
+    notify(r)
     if not r.passed:
         return out
 
@@ -74,6 +77,7 @@ def run_ladder(
 
     r = run_lint(workdir)
     out.results.append(r)
+    notify(r)
     if not r.passed:
         return out
 
@@ -82,11 +86,13 @@ def run_ladder(
     (sketch_dir / "sketch.ino").write_text(design.firmware)
     r, bins = run_compile(sketch_dir, design.board, build_dir=workdir / "build")
     out.results.append(r)
+    notify(r)
     if not r.passed or bins is None:
         return out
 
     r = run_consistency(design, cat)
     out.results.append(r)
+    notify(r)
     if not r.passed:
         return out
 
@@ -99,5 +105,6 @@ def run_ladder(
     write_wokwi_toml(workdir, bins.bin, bins.elf)
     r = run_simulate(workdir, scenario, timeout_ms)
     out.results.append(r)
+    notify(r)
     out.passed = r.passed
     return out

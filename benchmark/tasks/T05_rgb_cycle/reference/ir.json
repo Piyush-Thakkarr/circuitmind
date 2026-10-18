@@ -1,0 +1,18 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    { "id": "rgb1", "type": "wokwi-rgb-led", "attrs": {} },
+    { "id": "r1", "type": "wokwi-resistor", "attrs": { "value": "220" } },
+    { "id": "r2", "type": "wokwi-resistor", "attrs": { "value": "220" } },
+    { "id": "r3", "type": "wokwi-resistor", "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    ["esp:D25", "r1:1"], ["r1:2", "rgb1:R"],
+    ["esp:D26", "r2:1"], ["r2:2", "rgb1:G"],
+    ["esp:D27", "r3:1"], ["r3:2", "rgb1:B"],
+    ["rgb1:COM", "esp:GND.1"]
+  ],
+  "firmware": "const int R = 25, G = 26, B = 27;\nint cycles = 0;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(R, OUTPUT); pinMode(G, OUTPUT); pinMode(B, OUTPUT);\n}\n\nvoid show(int r, int g, int b) {\n  digitalWrite(R, r); digitalWrite(G, g); digitalWrite(B, b);\n  delay(300);\n}\n\nvoid loop() {\n  show(HIGH, LOW, LOW);\n  show(LOW, HIGH, LOW);\n  show(LOW, LOW, HIGH);\n  if (++cycles == 1) Serial.println(\"RGB\");\n}\n",
+  "status_line": "RGB",
+  "explanation": "R, G, B each through 220 ohms to GPIO 25, 26, 27. Common cathode to ground. One cycle then RGB."
+}

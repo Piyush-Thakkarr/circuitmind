@@ -1,0 +1,12 @@
+id: T04_ultrasonic_distance
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Read distance from an HC-SR04 ultrasonic sensor connected to the ESP32.
+  Every 500 ms print the distance in centimetres to the serial monitor at
+  115200 baud in the form DIST=<number>.
+status_line: DIST=
+timeout_ms: 5000
+notes: >
+  Tests TRIG output and ECHO input wiring and pulseIn timing. The status line
+  is a prefix; any reading satisfies it.

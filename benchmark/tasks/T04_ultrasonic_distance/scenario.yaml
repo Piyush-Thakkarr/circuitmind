@@ -1,0 +1,5 @@
+name: T04_ultrasonic_distance
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "DIST="
