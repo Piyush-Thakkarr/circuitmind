@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CircuitMind Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0B1016;--bg2:#111923;--bg3:#16212C;--line:#1F2B38;--line2:#2B3A4A;
+  --ink:#EAF0F5;--ink2:#93A1B0;--ink3:#5F6E7D;
+  --copper:#E0913B;--copper2:#F5B86A;--copper-dim:#6E4A22;
+  --signal:#5EE6D8;--signal-dim:#1C4F4B;--fail:#F0705E;--fail-dim:#4A1F19;
+  --display:"Syne",ui-sans-serif,system-ui,sans-serif;
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+@media (max-width:640px){.wrap{width:calc(100% - 32px)}}
+
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:rgba(11,16,22,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:20px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:800;font-size:18px}
+.brand svg{width:24px;height:24px}
+.nav .spacer{flex:1}
+.conn{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.conn.ok i{background:var(--signal);box-shadow:0 0 10px var(--signal)}
+.conn.bad i{background:var(--fail)}
+.conn button{background:transparent;border:1px solid var(--line2);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--ink2)}
+
+main{padding-block:36px 90px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3vw,34px);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px}
+.sub{color:var(--ink2);margin:0 0 20px;max-width:56ch}
+.prompt{display:flex;flex-direction:column;gap:10px;background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:14px}
+.prompt textarea{width:100%;min-height:96px;resize:vertical;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;line-height:1.5;outline:none}
+.prompt textarea::placeholder{color:var(--ink3)}
+.prompt .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:10px 16px;font-weight:500;font-size:14.5px;border:1px solid var(--line2);background:transparent;text-decoration:none;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--bg3)}
+.btn.primary{background:var(--copper);border-color:var(--copper);color:#1A1006}
+.btn.primary:hover{background:var(--copper2)}
+.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--ink2)}
+.chip:hover{border-color:var(--copper);color:var(--ink)}
+.opt{display:flex;gap:16px;align-items:center;font-size:13.5px;color:var(--ink2);margin-left:auto}
+.opt label{display:flex;gap:6px;align-items:center}
+
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px}
+.panel h2{font-family:var(--display);font-weight:800;font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
+.attempt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.attempt .hd{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:8px}
+.attempt .hd b{font-weight:600}
+.attempt .hd .st{font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.rungs{display:flex;flex-wrap:wrap;gap:6px}
+.rung{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:6px;border:1px solid var(--line2);color:var(--ink3)}
+.rung i{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
+.rung.active{border-color:var(--copper);color:var(--copper2)}
+.rung.active i{background:var(--copper);animation:pulse 1s infinite}
+.rung.pass{border-color:var(--signal-dim);color:var(--signal)}
+.rung.pass i{background:var(--signal)}
+.rung.fail{border-color:rgba(240,112,94,.5);color:var(--fail)}
+.rung.fail i{background:var(--fail)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.fb{margin-top:10px;background:#070B10;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#C9D3DD;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto}
+.fb .bad{color:var(--fail)}
+.empty{color:var(--ink3);font-size:14px;padding:18px;text-align:center;border:1px dashed var(--line2);border-radius:10px}
+.verdict{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:10px;margin-bottom:16px;font-weight:600}
+.verdict.ok{background:var(--signal-dim);color:var(--signal)}
+.verdict.no{background:var(--fail-dim);color:var(--fail)}
+.verdict small{font-weight:400;color:var(--ink2);font-family:var(--mono);font-size:12px;margin-left:auto}
+.sec{margin-top:18px}
+.sec h3{font-size:14px;font-weight:600;margin:0 0 8px;color:var(--ink2);letter-spacing:.02em}
+ol.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+ol.steps li::marker{color:var(--copper2);font-family:var(--mono)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--ink2);font-weight:500}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
+.notes{margin:0;padding-left:20px;color:var(--ink2);font-size:14px}
+pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#C9D3DD;overflow:auto;max-height:360px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.toolbar .btn{padding:7px 12px;font-size:13px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:14px;z-index:50}
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(5,8,12,.72);backdrop-filter:blur(8px)}
+.modal .box{width:min(460px,100%);background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px}
+.modal h3{font-family:var(--display);font-weight:800;font-size:20px;margin:0 0 6px}
+.modal p{color:var(--ink2);font-size:14px;margin:0 0 14px}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;color:var(--ink);font:inherit;font-family:var(--mono);font-size:14px}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="CircuitMind home">
+      <svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><rect x="6" y="6" width="14" height="14" rx="2.5" stroke="#E0913B" stroke-width="1.8"/><path d="M9 6V2M13 6V2M17 6V2M9 24v-4M13 24v-4M17 24v-4M6 9H2M6 13H2M6 17H2M24 9h-4M24 13h-4M24 17h-4" stroke="#E0913B" stroke-width="1.6" stroke-linecap="round"/><circle cx="13" cy="13" r="2.4" fill="#5EE6D8"/></svg>
+      CircuitMind
+    </a>
+    <span class="spacer"></span>
+    <div class="conn" id="conn"><i></i><span id="connText">checking engine</span><button id="connBtn" type="button">Engine URL</button></div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="grid">
+    <section>
+      <h1>What do you want to build?</h1>
+      <p class="sub">Describe it in a sentence. The design is generated, checked, and run in a simulator before you see it.</p>
+      <form class="prompt" id="form">
+        <textarea id="prompt" placeholder="A buzzer that beeps three times when I press a button, then prints BEEP to serial"></textarea>
+        <div class="row">
+          <button class="btn primary" type="submit" id="go">Build and verify</button>
+          <div class="opt">
+            <label><input type="checkbox" id="simulate" checked> run in simulator</label>
+            <label>attempts <select id="attempts"><option>1</option><option>2</option><option selected>3</option></select></label>
+          </div>
+        </div>
+      </form>
+      <div class="chips" id="chips">
+        <button class="chip" type="button">Blink a red LED once a second and print BLINK after two cycles</button>
+        <button class="chip" type="button">A servo that sweeps 0 to 180 and back when a button is pressed, then prints SWEEP</button>
+        <button class="chip" type="button">Read an HC-SR04 and print DIST= followed by centimetres every half second</button>
+        <button class="chip" type="button">An RGB LED that cycles red, green, blue for 300 ms each, then prints RGB</button>
+        <button class="chip" type="button">A PIR motion sensor that lights an LED and prints MOTION when triggered</button>
+      </div>
+
+      <div class="panel" style="margin-top:22px">
+        <h2>Checks</h2>
+        <div id="attempts_view"><div class="empty">Nothing running. Submit a prompt to start.</div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="result">
+      <h2>Build guide</h2>
+      <div id="result_body"><div class="empty">The guide appears here once a design passes every check.</div></div>
+    </section>
+  </div>
+</div>
+</main>
+
+<div class="modal" id="urlModal" hidden role="dialog" aria-modal="true" aria-labelledby="urlTitle">
+  <div class="box">
+    <h3 id="urlTitle">Engine URL</h3>
+    <p>The engine is the local server running <code>circuitmind serve</code>. Default is your own machine. For a tunnel, paste its https address.</p>
+    <input id="urlInput" type="url" value="">
+    <div class="row"><button class="btn" type="button" id="urlCancel">Cancel</button><button class="btn primary" type="button" id="urlSave">Save</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var RUNGS = ['schema','lint','compile','consistency','simulate'];
+  var $ = function(id){ return document.getElementById(id); };
+  var api = 'http://127.0.0.1:8000';
+  try { api = localStorage.getItem('cm_api') || api; } catch(e){}
+  var q = new URLSearchParams(location.search);
+  if (q.get('prompt')) $('prompt').value = q.get('prompt');
+
+  function toast(msg){ var t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2200); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  /* engine connection */
+  function checkConn(){
+    var el=$('conn'); el.className='conn'; $('connText').textContent='checking engine';
+    fetch(api+'/health',{cache:'no-store'}).then(function(r){return r.json();}).then(function(h){
+      el.className='conn ok';
+      $('connText').textContent='engine online' + (h.wokwi ? '' : ', no simulator token');
+    }).catch(function(){ el.className='conn bad'; $('connText').textContent='engine offline'; });
+  }
+  checkConn();
+  $('connBtn').addEventListener('click', function(){ $('urlInput').value=api; $('urlModal').hidden=false; $('urlInput').focus(); });
+  $('urlCancel').addEventListener('click', function(){ $('urlModal').hidden=true; });
+  $('urlSave').addEventListener('click', function(){ api=$('urlInput').value.replace(/\/+$/,''); try{ localStorage.setItem('cm_api',api);}catch(e){} $('urlModal').hidden=true; checkConn(); });
+  $('urlModal').addEventListener('click', function(e){ if(e.target===$('urlModal')) $('urlModal').hidden=true; });
+
+  $('chips').addEventListener('click', function(e){ if(e.target.classList.contains('chip')){ $('prompt').value=e.target.textContent; $('prompt').focus(); } });
+
+  /* attempts view */
+  var attempts = {};
+  function attemptRow(n){
+    if (attempts[n]) return attempts[n];
+    var div=document.createElement('div'); div.className='attempt';
+    div.innerHTML='<div class="hd"><b>Attempt '+n+'</b><span class="st">asking model</span></div><div class="rungs">'+
+      RUNGS.map(function(r){ return '<span class="rung" data-r="'+r+'"><i></i>'+r+'</span>'; }).join('')+'</div>';
+    var host=$('attempts_view'); if (host.querySelector('.empty')) host.innerHTML='';
+    host.appendChild(div); attempts[n]=div; return div;
+  }
+  function setRung(n, r, state, summary){
+    var row=attemptRow(n); var el=row.querySelector('[data-r="'+r+'"]'); if(!el) return;
+    el.className='rung '+state; if (summary) el.title=summary;
+  }
+  function setStatus(n, text){ var row=attemptRow(n); row.querySelector('.st').textContent=text; }
+  function addFeedback(n, text, bad){ var row=attemptRow(n); var fb=document.createElement('div'); fb.className='fb'; fb.innerHTML=(bad?'<span class="bad">':'')+esc(text)+(bad?'</span>':''); row.appendChild(fb); }
+
+  function showGuide(res){
+    var body=$('result_body');
+    if (!res || !res.design){
+      body.innerHTML='<div class="verdict no">Not verified<small>'+(res && res.attempts ? res.attempts.length+' attempt(s)' : '')+'</small></div>'+
+        '<p style="color:var(--ink2)">The model could not produce a design that passed every check. The last error is shown under the attempts. Try a simpler description or fewer parts.</p>';
+      return;
+    }
+    var g=res.guide, d=res.design;
+    var ok=res.passed;
+    var html='<div class="verdict '+(ok?'ok':'no')+'">'+(ok?'Verified in simulation':'Not verified')+
+      '<small>'+res.model+' · '+res.tokens.in+' in / '+res.tokens.out+' out</small></div>';
+    if (g.summary) html+='<p style="margin:0 0 6px">'+esc(g.summary)+'</p>';
+    html+='<div class="sec"><h3>Wiring, in order</h3><ol class="steps">'+g.wiring.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ol></div>';
+    html+='<div class="sec"><h3>Parts</h3><table><tr><th>Part</th><th class="n">Qty</th><th class="n">Approx ₹</th></tr>'+
+      g.parts.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td class="n">'+p.qty+'</td><td class="n">'+p.approx_inr+'</td></tr>';}).join('')+
+      '<tr><td><b>Total</b></td><td></td><td class="n"><b>'+g.total_inr+'</b></td></tr></table></div>';
+    html+='<div class="sec"><h3>Before you build</h3><ul class="notes">'+g.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></div>';
+    html+='<div class="sec"><h3>Firmware</h3><pre class="code" id="fw">'+esc(g.firmware)+'</pre>'+
+      '<div class="toolbar"><button class="btn" type="button" data-copy="fw">Copy code</button>'+
+      '<button class="btn" type="button" id="dlIno">Download sketch.ino</button>'+
+      '<button class="btn" type="button" id="dlDiag">Download diagram.json</button>'+
+      '<a class="btn" href="https://wokwi.com/projects/new/esp32" target="_blank" rel="noopener">Open Wokwi</a></div>'+
+      '<p style="color:var(--ink3);font-size:13px;margin:8px 0 0">In Wokwi: new ESP32 project, replace diagram.json and the sketch with the downloads, press play. It prints <code>'+esc(g.status_line)+'</code> when it works.</p></div>';
+    body.innerHTML=html;
+    body.querySelector('[data-copy]').addEventListener('click', function(){ navigator.clipboard.writeText(g.firmware).then(function(){toast('Copied');}); });
+    function dl(name, text){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'})); a.download=name; a.click(); }
+    $('dlIno').addEventListener('click', function(){ dl('sketch.ino', g.firmware); });
+    $('dlDiag').addEventListener('click', function(){ dl('diagram.json', res.diagram_json || JSON.stringify(d,null,2)); });
+  }
+
+  /* submit */
+  $('form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var prompt=$('prompt').value.trim(); if (prompt.length<5){ toast('Describe the project in a sentence.'); return; }
+    attempts={}; $('attempts_view').innerHTML=''; $('result_body').innerHTML='<div class="empty">Working…</div>';
+    $('go').disabled=true;
+    fetch(api+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:prompt, simulate:$('simulate').checked, attempts:parseInt($('attempts').value,10), provider:'groq'})})
+    .then(function(r){ if(!r.ok) return r.json().then(function(j){ throw new Error(j.detail||r.status); }); return r.json(); })
+    .then(function(j){ stream(j.job_id); })
+    .catch(function(err){ $('go').disabled=false; $('attempts_view').innerHTML='<div class="empty">Could not reach the engine: '+esc(err.message)+'. Start it with <code>circuitmind serve</code>.</div>'; });
+  });
+
+  function stream(jobId){
+    var es=new EventSource(api+'/jobs/'+jobId+'/events');
+    var current=null;
+    es.onmessage=function(m){
+      var e=JSON.parse(m.data);
+      if (e.kind==='model.start'){ current=e.attempt; attemptRow(e.attempt); setStatus(e.attempt,'asking model…'); }
+      else if (e.kind==='model.done'){ setStatus(e.attempt, 'model replied in '+e.latency_s.toFixed(1)+'s · '+e.tokens_in+' in / '+e.tokens_out+' out'); RUNGS.forEach(function(r){ setRung(e.attempt,r,'',''); }); setRung(e.attempt,'schema','active'); }
+      else if (e.kind==='rung'){
+        setRung(e.attempt, e.rung, e.passed?'pass':'fail', e.summary);
+        var i=RUNGS.indexOf(e.rung); if (e.passed && i<RUNGS.length-1 && $('simulate').checked) setRung(e.attempt, RUNGS[i+1], 'active');
+        else if (e.passed && i===3 && !$('simulate').checked) {}
+        if (!e.passed) setStatus(e.attempt, 'failed at '+e.rung);
+      }
+      else if (e.kind==='attempt.done'){
+        if (e.passed) setStatus(e.attempt,'passed');
+        else setStatus(e.attempt,'failed at '+e.failed_rung+' · sending the error back');
+      }
+      else if (e.kind==='end'){
+        es.close(); $('go').disabled=false;
+        fetch(api+'/jobs/'+jobId).then(function(r){return r.json();}).then(function(j){
+          if (j.error){ $('result_body').innerHTML='<div class="verdict no">Engine error</div><pre class="code">'+esc(j.error)+'</pre>'; return; }
+          var res=j.result;
+          (res.attempts||[]).forEach(function(a){
+            var last=a.rungs[a.rungs.length-1];
+            if (!a.passed && last) addFeedback(a.n, last.rung+': '+last.summary+(last.detail?'\n'+last.detail:''), true);
+          });
+          showGuide(res);
+        });
+      }
+    };
+    es.onerror=function(){ es.close(); $('go').disabled=false; setStatus(current||1,'connection lost'); };
+  }
+})();
+</script>
+</body>
+</html>

@@ -54,3 +54,10 @@ def test_comma_separated_declarations_resolve():
     r = run_consistency(d, CAT)
     assert r.extra["resolved"] is True
     assert not r.passed and "GPIO [26, 27]" in r.detail
+
+
+def test_static_setup_is_stripped():
+    from circuitmind.harness.ladder import sanitize_firmware
+    src = "static void setup(){}\nstatic void loop(){}\nstatic void helper(){}"
+    out = sanitize_firmware(src)
+    assert out.startswith("void setup()") and "\nvoid loop()" in out and "static void helper" in out

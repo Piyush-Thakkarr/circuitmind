@@ -217,3 +217,11 @@ def bench(
     typer.echo(f"{sum(r.passed for r in rows)}/{len(rows)} passed. wrote {p}")
     typer.echo("")
     typer.echo(summary_table(results))
+
+
+@app.command()
+def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+    """Start the HTTP API for the web app."""
+    import uvicorn
+
+    uvicorn.run("circuitmind.api:app", host=host, port=port, log_level="info")

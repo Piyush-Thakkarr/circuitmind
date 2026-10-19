@@ -87,8 +87,13 @@ def run_generation(
     use_feedback: bool = True,
     inject_serial_monitor: bool = False,
     on_event=None,
+    scenario_factory=None,
 ) -> RunResult:
-    """Run the loop. ``on_event(kind, payload)`` receives progress for a CLI or UI."""
+    """Run the loop. ``on_event(kind, payload)`` receives progress for a CLI or UI.
+
+    ``scenario_factory(design, attempt_dir) -> Path`` builds a scenario for a design
+    when no fixed task scenario exists (free-form prompts from the web app).
+    """
     emit = on_event or (lambda kind, payload: None)
     result = RunResult(request=request)
     workdir.mkdir(parents=True, exist_ok=True)
@@ -121,7 +126,10 @@ def run_generation(
             outcome = _schema_fail(msg)
         else:
             (adir / "ir.json").write_text(design.model_dump_json(indent=2))
-            outcome = run_ladder(design, cat, adir, scenario=scenario, timeout_ms=timeout_ms,
+            scen = scenario
+            if simulate and scen is None and scenario_factory is not None:
+                scen = scenario_factory(design, adir)
+            outcome = run_ladder(design, cat, adir, scenario=scen, timeout_ms=timeout_ms,
                                  simulate=simulate, inject_serial_monitor=inject_serial_monitor,
                                  on_rung=lambda r: emit("rung", {"attempt": n, "rung": r.rung.value,
                                                                   "passed": r.passed, "summary": r.summary,

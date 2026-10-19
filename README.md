@@ -26,13 +26,33 @@ Model: `openai/gpt-oss-120b` on Groq's free tier. Full table, per-task matrix an
 
 What that table shows: without the catalogue the model invents pin names. With it, most designs pass. Retrying on compile errors alone did not move the total, because the one wrong design in C passed every free check and only failed when it actually ran. Retrying on what the simulator saw got all five.
 
+## Architecture
+
+### High-level design
+
+What runs where. The browser talks to an engine on the owner's laptop; the engine talks to a model provider and to Wokwi. Everything is on a free tier.
+
+![High-level design](docs/diagrams/hld.png)
+
+### Low-level design
+
+The modules in `src/circuitmind`, what each one owns, and who calls whom. Control flow is orange, the verified output path is teal, failure feedback is red.
+
+![Low-level design](docs/diagrams/lld.png)
+
+### Simulation flow
+
+What happens to one attempt, from the model's JSON reply to a pass or fail verdict. Rungs 1 to 4 are free and local; only rung 5 spends simulated time, and the verdict comes from `wokwi-cli`'s exit code.
+
+![Simulation flow](docs/diagrams/simulation-flow.png)
+
 ## Layout
 
 ```
 benchmark/tasks/     one folder per task: task.yaml, scenario.yaml, reference/
 benchmark/results/   README.md with the table, plus one JSON per configuration
 catalogue/parts.json part types and their valid pins, extracted from wokwi-cli lint
-docs/                demo-runs.md, real transcripts from the loop
+docs/                demo-runs.md, real transcripts from the loop; diagrams/ (HLD, LLD, simulation flow)
 src/circuitmind/     ir.py (the design schema), expand.py (schema to diagram.json),
                      catalogue.py, prompt.py, providers.py (Gemini, Groq, OpenRouter, mock),
                      loop.py (generate, check, correct), bench.py (the four configurations),
@@ -67,6 +87,16 @@ Run the benchmark:
 ```
 circuitmind bench A --provider groq      # then B, C, D
 ```
+
+## Web app
+
+The site in `web/` is static. It talks to a small API that runs on your machine:
+
+```
+circuitmind serve                        # http://127.0.0.1:8000
+```
+
+Open `web/app.html` (or the deployed site's `/app.html`), type a project, and watch the checks run. The page streams progress from the API and shows the wiring guide, parts list and firmware when a design passes. Free-form prompts get a scenario built from the design itself: any pushbutton is pressed, then the simulator waits for the status line the model declared.
 
 Or with Docker, which bakes the toolchain and a warm build cache:
 

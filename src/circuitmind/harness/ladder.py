@@ -6,6 +6,7 @@ Free rungs first, simulation last, stop at the first failure.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -34,6 +35,19 @@ class LadderOutcome:
 
     def feedback(self) -> str:
         return "\n".join(r.feedback() for r in self.results)
+
+
+_STATIC_ENTRY = re.compile(r"\bstatic\s+(?=void\s+(?:setup|loop)\s*\()")
+
+
+def sanitize_firmware(src: str) -> str:
+    """Repairs that are always safe and that models get wrong repeatedly.
+
+    Arduino's build declares setup() and loop() for the core to call, so a
+    ``static`` on either one fails to link. Stripping it never changes a
+    correct sketch.
+    """
+    return _STATIC_ENTRY.sub("", src)
 
 
 def _schema_rung(design: Design, cat: Catalogue) -> RungResult:
@@ -83,7 +97,7 @@ def run_ladder(
 
     sketch_dir = workdir / "sketch"
     sketch_dir.mkdir(exist_ok=True)
-    (sketch_dir / "sketch.ino").write_text(design.firmware)
+    (sketch_dir / "sketch.ino").write_text(sanitize_firmware(design.firmware))
     r, bins = run_compile(sketch_dir, design.board, build_dir=workdir / "build")
     out.results.append(r)
     notify(r)

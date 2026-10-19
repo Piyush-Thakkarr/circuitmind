@@ -196,7 +196,7 @@ footer a:hover{color:var(--ink)}
     </nav>
     <div class="nav-cta">
       <button class="btn" data-open-login>Log in</button>
-      <button class="btn primary" data-open-login>Get started</button>
+      <a class="btn primary" href="app.html">Get started</a>
     </div>
   </div>
 </header>
@@ -349,7 +349,7 @@ Breadboard + jumpers  ×1
       <p>Free while it's in development. Bring an idea, leave with a wiring guide.</p>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <button class="btn primary lg" data-open-login>Get started</button>
+      <a class="btn primary lg" href="app.html">Get started</a>
       <a class="btn lg" href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">View the source</a>
     </div>
   </div>
@@ -520,7 +520,7 @@ Breadboard + jumpers  ×1
     }
   }
   var pf = document.getElementById('promptForm');
-  if (pf) pf.addEventListener('submit', function(e){ e.preventDefault(); openLogin(); });
+  if (pf) pf.addEventListener('submit', function(e){ e.preventDefault(); var v=(input&&input.value.trim())||''; location.href='app.html'+(v?'?prompt='+encodeURIComponent(v):''); });
 
   /* ---------- ladder + terminal ---------- */
   var term = document.getElementById('term'), ladder = document.getElementById('ladder');
