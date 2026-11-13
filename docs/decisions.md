@@ -198,6 +198,16 @@ the model to build the closest catalogue-only project and say in `explanation` w
 left out, rather than invent a part. Mains is refused even though a relay module is in the
 catalogue: the relay task uses an LED as the load.
 
+**Task scenarios are retargeted to the design's part ids before simulation.**
+A scenario presses `btn1`; a model design may call its button `button_a`. Before the
+simulator runs, each set-control step whose part id is missing (or names a part of the
+wrong type) is pointed at the one design part that can take that control, and the simulate
+summary says "scenario parts mapped: btn1 -> button_a". With no fitting part the rung fails
+at once, before any budget is spent, with "the scenario needs a pushbutton called btn1 but
+the design has no such part": the design really does lack what the task asks for. With
+several fitting parts nothing is guessed; the task's prompt must name them, which T10 now
+does (btn_up, btn_down). The reference scenarios are unchanged because their ids match.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.

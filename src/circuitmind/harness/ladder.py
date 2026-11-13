@@ -13,6 +13,7 @@ from pathlib import Path
 from ..catalogue import Catalogue
 from ..expand import canonical_json, expand
 from ..ir import Design
+from ..scenario import adapt_to_design
 from .compile import run_compile
 from .consistency import run_consistency
 from .electrical import run_electrical
@@ -123,8 +124,25 @@ def run_ladder(
 
     if scenario is None:
         raise ValueError("scenario required when simulate=True")
+    adapted, notes, missing = adapt_to_design(scenario.read_text(), design)
+    if missing:
+        r = RungResult(
+            rung=Rung.SIMULATE,
+            passed=False,
+            summary="the design lacks a part the test drives",
+            detail="\n".join(missing),
+            extra={"scenario_missing": missing},
+        )
+        out.results.append(r)
+        notify(r)
+        return out
+    scen_path = workdir / "scenario.adapted.yaml"
+    scen_path.write_text(adapted)
     write_wokwi_toml(workdir, bins.bin, bins.elf)
-    r = run_simulate(workdir, scenario, timeout_ms)
+    r = run_simulate(workdir, scen_path, timeout_ms)
+    if notes:
+        r.summary = (r.summary + "; " if r.summary else "") + "scenario parts mapped: " + ", ".join(notes)
+        r.extra["scenario_notes"] = notes
     out.results.append(r)
     notify(r)
     out.passed = r.passed
