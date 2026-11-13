@@ -21,8 +21,12 @@ from dataclasses import dataclass, field
 from .harness.electrical import driving_board_pin
 from .ir import Design
 
-_LED_ON_RE = re.compile(r"\b(turns? on|turn it on|lights? up|lights?|lit|switch(?:es)? on|glows?|led on)\b", re.I)
-_LED_NOT_STEADY_RE = re.compile(r"\b(blink\w*|flash\w*|fade\w*|pwm|toggle\w*|cycle\w*|pulse\w*|dim\w*|breath\w*)\b", re.I)
+_LED_ON_RE = re.compile(
+    r"\b(turns? on|turn it on|lights? up|lights?|lit|switch(?:es)? on|glows?|led on)\b", re.I
+)
+_LED_NOT_STEADY_RE = re.compile(
+    r"\b(blink\w*|flash\w*|fade\w*|pwm|toggle\w*|cycle\w*|pulse\w*|dim\w*|breath\w*)\b", re.I
+)
 
 
 @dataclass

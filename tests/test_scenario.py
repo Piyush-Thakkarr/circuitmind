@@ -27,7 +27,7 @@ LED_BTN = _design(
 def test_button_is_pressed_and_status_line_awaited():
     s = build_scenario(LED_BTN, "when I press the button print DONE")
     doc = yaml.safe_load(s.yaml)
-    kinds = [list(step)[0] for step in doc["steps"]]
+    kinds = [next(iter(step)) for step in doc["steps"]]
     assert kinds == ["delay", "set-control", "wait-serial"]
     assert doc["steps"][1]["set-control"]["part-id"] == "btn1"
     assert doc["steps"][2]["wait-serial"] == "DONE"
