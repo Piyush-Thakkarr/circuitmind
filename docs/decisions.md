@@ -167,6 +167,16 @@ checked, which the `used_gpio` field makes visible. Output-on-input-only now use
 resolved values too, so `const int LED = 34; pinMode(LED, OUTPUT)` is caught. Pass-through
 count on the reference suite went from 1 of 20 to 0 of 20.
 
+**Free-form scenarios are built by `scenario.py` and report their checks as sentences.**
+The web app's scenario used to live inline in the API: press every button, wait for the
+status line. It now also adds an `expect-pin` on the GPIO driving each LED when the prompt
+says the LED should be on and does not say blink, fade, toggle or cycle (an instantaneous
+check means nothing for those). Each step produces one sentence ("pressed btn1 and held
+it", "checked D13, which drives led1, was high after that line") and the result screen
+lists them under "What the simulator checked", with a line saying nothing else was tested.
+A run with the simulator switched off is labelled "passed the free checks, not simulated",
+never "verified".
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.

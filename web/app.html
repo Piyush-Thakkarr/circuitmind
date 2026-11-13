@@ -216,9 +216,14 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
       return;
     }
     var g=res.guide, d=res.design;
-    var ok=res.passed;
-    var html='<div class="verdict '+(ok?'ok':'no')+'">'+(ok?'Verified in simulation':'Not verified')+
+    var ok=res.passed, simulated=!!res.simulation;
+    var label = !ok ? 'Not verified' : (simulated ? 'Verified in simulation' : 'Passed the free checks, not simulated');
+    var html='<div class="verdict '+(ok?'ok':'no')+'">'+label+
       '<small>'+res.model+' · '+res.tokens.in+' in / '+res.tokens.out+' out</small></div>';
+    if (ok && simulated && res.checks && res.checks.length){
+      html+='<div class="sec"><h3>What the simulator checked</h3><ul class="notes">'+res.checks.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+
+        '</ul><p style="color:var(--ink3);font-size:13px;margin:6px 0 0">Nothing beyond this list was tested. Timing, brightness and anything the prompt implied but did not state were not checked.</p></div>';
+    }
     if (g.summary) html+='<p style="margin:0 0 6px">'+esc(g.summary)+'</p>';
     html+='<div class="sec"><h3>Wiring, in order</h3><ol class="steps">'+g.wiring.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ol></div>';
     html+='<div class="sec"><h3>Parts</h3><table><tr><th>Part</th><th class="n">Qty</th><th class="n">Approx ₹</th></tr>'+

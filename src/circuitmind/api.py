@@ -30,6 +30,7 @@ from . import catalogue as cat_mod
 from .guide import build_guide
 from .loop import run_generation
 from .providers import get_provider
+from .scenario import build_scenario
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNS = ROOT / "runs" / "api"
@@ -83,15 +84,14 @@ def _run(job_id: str, req: GenerateRequest) -> None:
             def on_event(kind: str, p: dict[str, Any]) -> None:
                 _push(job, kind, p)
 
+            checks: dict[int, list[str]] = {}
+
             def scenario_for(design, adir: Path) -> Path:
-                """Wait for the design's own status line. Press every button first."""
-                steps = ["  - delay: 500ms"]
-                for part in design.parts:
-                    if part.type == "wokwi-pushbutton":
-                        steps.append(f"  - set-control:\n      part-id: {part.id}\n      control: pressed\n      value: 1")
-                steps.append(f"  - wait-serial: {json.dumps(design.status_line)}")
+                """Built from the design itself; the checks it makes are reported to the user."""
+                sc = build_scenario(design, req.prompt)
+                checks[int(adir.name.rsplit("_", 1)[-1])] = sc.checks
                 scen = adir / "scenario.yaml"
-                scen.write_text("name: web\nversion: 1\nauthor: circuitmind\nsteps:\n" + "\n".join(steps) + "\n")
+                scen.write_text(sc.yaml)
                 return scen
 
             res = run_generation(
@@ -118,6 +118,7 @@ def _run(job_id: str, req: GenerateRequest) -> None:
                     for a in res.attempts
                 ],
                 "simulation": sim_result,
+                "checks": checks.get(final.n, []) if (final and req.simulate) else [],
                 "model": final.reply.model if final else "",
                 "tokens": dict(zip(("in", "out"), res.tokens())),
             }
