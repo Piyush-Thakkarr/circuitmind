@@ -11,4 +11,6 @@ notes: >
   First display task. Tests I2C wiring (SDA on D21, SCL on D22), the lcd1602
   part in i2c mode, and the LiquidCrystal I2C library at address 0x27. The
   simulator does not read the screen; the status line confirms the code ran past
-  the display calls without hanging on the bus.
+  the display calls without hanging on the bus. No pin check: wokwi-cli has no
+  way to read LCD text (no expect-text), so the status line after the display
+  calls is the check.

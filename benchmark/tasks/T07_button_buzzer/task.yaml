@@ -2,12 +2,13 @@ id: T07_button_buzzer
 category: inputs
 board: wokwi-esp32-devkit-v1
 prompt: >
-  Connect a pushbutton and a piezo buzzer to the ESP32. Use the internal pull-up
-  for the button. When the button is pressed, sound the buzzer for 200 ms and
-  then print BEEP to the serial monitor at 115200 baud.
+  Connect a pushbutton and a piezo buzzer (on GPIO 13) to the ESP32. Use the
+  internal pull-up for the button. When the button is pressed, sound the buzzer
+  for 200 ms and then print BEEP to the serial monitor at 115200 baud.
 status_line: BEEP
 timeout_ms: 6000
 notes: >
   Two parts, one input and one output. The scenario presses the button after one
   second. The reference drives the buzzer with a plain square wave so it does
-  not depend on tone() support in the ESP32 core.
+  not depend on tone() support in the ESP32 core. The scenario also checks GPIO
+  13 is low when BEEP prints: the buzzer must have stopped after its 200 ms.

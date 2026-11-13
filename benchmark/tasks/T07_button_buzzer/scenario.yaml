@@ -8,6 +8,10 @@ steps:
       control: pressed
       value: 1
   - wait-serial: "BEEP"
+  - expect-pin:
+      part-id: esp
+      name: D13
+      value: 0
   - set-control:
       part-id: btn1
       control: pressed

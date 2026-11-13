@@ -12,4 +12,5 @@ notes: >
   Tests PWM on the ESP32. The reference uses analogWrite, which the ESP32
   Arduino core maps to its LEDC peripheral. Designs that reach for the older
   ledcSetup/ledcAttachPin calls may not compile on newer cores, which is the
-  kind of version mistake the compile rung exists to catch.
+  kind of version mistake the compile rung exists to catch. No pin check: PWM
+  output, an instantaneous level would be luck.

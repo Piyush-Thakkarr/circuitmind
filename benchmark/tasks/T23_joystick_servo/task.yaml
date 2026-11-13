@@ -12,4 +12,5 @@ notes: >
   Two-axis input driving an actuator. Tests picking the right axis pin, ADC on
   an input-only pin, servo power from VIN and the ESP32Servo library. The
   scenario pushes the stick to both ends and expects ANGLE=180 then ANGLE=0, so
-  a sketch that reads the wrong axis or never updates fails.
+  a sketch that reads the wrong axis or never updates fails. No pin check: the
+  servo signal is a pulse train; the two-ended ANGLE check covers the behaviour.

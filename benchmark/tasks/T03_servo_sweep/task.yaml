@@ -9,3 +9,5 @@ timeout_ms: 8000
 notes: >
   Tests PWM-capable pin choice, servo power wiring, and library use
   (ESP32Servo). A full sweep at 15 ms per step is about 2.7 simulated seconds.
+  No pin check: the servo signal is a pulse train, so an instantaneous level
+  means nothing.

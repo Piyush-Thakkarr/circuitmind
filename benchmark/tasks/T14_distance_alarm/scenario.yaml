@@ -3,3 +3,7 @@ version: 1
 author: circuitmind
 steps:
   - wait-serial: "FAR"
+  - expect-pin:
+      part-id: esp
+      name: D13
+      value: 0
