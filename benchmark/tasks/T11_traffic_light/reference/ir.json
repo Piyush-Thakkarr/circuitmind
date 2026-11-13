@@ -1,0 +1,88 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "led_r",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "id": "led_y",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "yellow"
+      }
+    },
+    {
+      "id": "led_g",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "green"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r2",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r3",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:D25",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led_r:A"
+    ],
+    [
+      "led_r:C",
+      "esp:GND.1"
+    ],
+    [
+      "esp:D26",
+      "r2:1"
+    ],
+    [
+      "r2:2",
+      "led_y:A"
+    ],
+    [
+      "led_y:C",
+      "esp:GND.1"
+    ],
+    [
+      "esp:D27",
+      "r3:1"
+    ],
+    [
+      "r3:2",
+      "led_g:A"
+    ],
+    [
+      "led_g:C",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "const int RED = 25, YELLOW = 26, GREEN = 27;\nint cycles = 0;\n\nvoid only(int pin) {\n  digitalWrite(RED, pin == RED);\n  digitalWrite(YELLOW, pin == YELLOW);\n  digitalWrite(GREEN, pin == GREEN);\n}\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(RED, OUTPUT);\n  pinMode(YELLOW, OUTPUT);\n  pinMode(GREEN, OUTPUT);\n}\n\nvoid loop() {\n  only(RED);\n  delay(1000);\n  only(GREEN);\n  delay(1000);\n  only(YELLOW);\n  delay(500);\n  if (++cycles == 1) Serial.println(\"CYCLE\");\n}\n",
+  "status_line": "CYCLE",
+  "explanation": "Red, yellow, green on GPIO 25, 26, 27, each through 220 ohms to ground. only() lights one at a time. CYCLE after the first pass."
+}

@@ -1,0 +1,44 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "us1",
+      "type": "wokwi-hc-sr04",
+      "attrs": {}
+    },
+    {
+      "id": "bz1",
+      "type": "wokwi-buzzer",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "us1:VCC",
+      "esp:VIN"
+    ],
+    [
+      "us1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "us1:TRIG",
+      "esp:D5"
+    ],
+    [
+      "us1:ECHO",
+      "esp:D18"
+    ],
+    [
+      "bz1:1",
+      "esp:GND.2"
+    ],
+    [
+      "bz1:2",
+      "esp:D13"
+    ]
+  ],
+  "firmware": "const int TRIG = 5;\nconst int ECHO = 18;\nconst int BUZZ = 13;\n\nlong readCm() {\n  digitalWrite(TRIG, LOW);\n  delayMicroseconds(2);\n  digitalWrite(TRIG, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(TRIG, LOW);\n  long us = pulseIn(ECHO, HIGH, 30000);\n  return us / 58;\n}\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(TRIG, OUTPUT);\n  pinMode(ECHO, INPUT);\n  pinMode(BUZZ, OUTPUT);\n}\n\nvoid loop() {\n  long cm = readCm();\n  if (cm > 0 && cm < 30) {\n    digitalWrite(BUZZ, HIGH);\n    Serial.println(\"NEAR\");\n  } else {\n    digitalWrite(BUZZ, LOW);\n    Serial.println(\"FAR\");\n  }\n  delay(300);\n}\n",
+  "status_line": "FAR",
+  "explanation": "TRIG on GPIO 5, ECHO on GPIO 18, buzzer on GPIO 13. Under 30 cm drives the buzzer and prints NEAR; otherwise FAR."
+}

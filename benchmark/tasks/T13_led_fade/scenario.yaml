@@ -1,0 +1,5 @@
+name: T13_led_fade
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "FADE"

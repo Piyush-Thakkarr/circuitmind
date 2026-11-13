@@ -1,0 +1,14 @@
+id: T11_traffic_light
+category: output_basics
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Build a traffic light with three LEDs (red, yellow, green) on the ESP32, each
+  with its own series resistor. Cycle red for 1 s, green for 1 s, yellow for 500
+  ms, forever. After the first full cycle print CYCLE to the serial monitor at
+  115200 baud.
+status_line: CYCLE
+timeout_ms: 6000
+notes: >
+  Three outputs with three resistors: six parts, seven wires. Tests that the
+  model keeps ids unique and gives every LED its resistor. Timeout is generous
+  because the first cycle takes 2.5 s.

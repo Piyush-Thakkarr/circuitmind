@@ -1,0 +1,13 @@
+id: T15_pot_servo
+category: actuators
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a potentiometer and a servo to the ESP32. Map the potentiometer
+  position to the servo angle from 0 to 180 degrees and update it every 50 ms.
+  Every 500 ms print the current angle to the serial monitor at 115200 baud in
+  the form ANGLE=<number>.
+status_line: ANGLE=
+timeout_ms: 5000
+notes: >
+  Input drives actuator. Tests ADC on an input-only pin, servo power from VIN,
+  the ESP32Servo library, and map(). Any angle satisfies the status prefix.

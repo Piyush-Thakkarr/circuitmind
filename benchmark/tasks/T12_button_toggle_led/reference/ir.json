@@ -1,0 +1,51 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "btn1",
+      "type": "wokwi-pushbutton",
+      "attrs": {
+        "color": "green"
+      }
+    },
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "btn1:1.l",
+      "esp:D4"
+    ],
+    [
+      "btn1:2.l",
+      "esp:GND.1"
+    ],
+    [
+      "esp:D2",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led1:A"
+    ],
+    [
+      "led1:C",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "const int BTN = 4;\nconst int LED = 2;\nint last = HIGH;\nbool on = false;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(BTN, INPUT_PULLUP);\n  pinMode(LED, OUTPUT);\n  digitalWrite(LED, LOW);\n}\n\nvoid loop() {\n  int now = digitalRead(BTN);\n  if (last == HIGH && now == LOW) {\n    delay(30);\n    if (digitalRead(BTN) == LOW) {\n      on = !on;\n      digitalWrite(LED, on ? HIGH : LOW);\n      Serial.println(on ? \"LED=ON\" : \"LED=OFF\");\n    }\n  }\n  last = now;\n  delay(5);\n}\n",
+  "status_line": "LED=",
+  "explanation": "Button on GPIO 4 with pull-up, LED on GPIO 2 through 220 ohms. A falling edge flips a stored flag; the LED follows the flag, not the button."
+}

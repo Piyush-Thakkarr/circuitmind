@@ -1,0 +1,15 @@
+id: T14_distance_alarm
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect an HC-SR04 ultrasonic sensor and a piezo buzzer to the ESP32. Measure
+  distance every 300 ms. If the distance is under 30 cm sound the buzzer and
+  print NEAR, otherwise keep the buzzer off and print FAR. Serial at 115200
+  baud.
+status_line: FAR
+timeout_ms: 6000
+notes: >
+  Sensor plus actuator with a threshold. In the simulator the HC-SR04 starts at
+  its default distance (well over 30 cm), so the first reading must print FAR.
+  Tests that TRIG/ECHO wiring, pulseIn, and the buzzer pin all coexist on
+  distinct GPIOs.
