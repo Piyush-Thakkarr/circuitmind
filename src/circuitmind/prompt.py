@@ -21,6 +21,7 @@ Rules you must follow:
 - GPIO numbers in the firmware must match the board pins you wired. Pin D2 is GPIO 2, D4 is GPIO 4, and so on.
 - Prefer libraries available in the Arduino Library Manager. For servos on ESP32 use the ESP32Servo library.
 - Keep the design as simple as the request allows. No extra parts.
+- If the request cannot be built from the catalogue (it needs a motor driver, a camera, mains power, a radio, or a part that is not listed), design the closest project that can be built from the catalogue and say plainly in "explanation" what was left out and why. Never invent a part to fill the gap.
 - attrs is a list of key/value pairs, for example [{"key":"color","value":"red"}] for an LED or [{"key":"value","value":"220"}] for a resistor.
 """
 

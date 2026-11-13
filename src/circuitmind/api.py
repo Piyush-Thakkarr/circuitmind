@@ -32,6 +32,7 @@ from .guide import build_guide
 from .loop import run_generation
 from .providers import get_provider
 from .scenario import build_scenario
+from .scope import message, screen
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNS = ROOT / "runs" / "api"
@@ -155,7 +156,11 @@ def catalogue() -> dict[str, Any]:
 
 
 @app.post("/generate")
-def generate(req: GenerateRequest) -> dict[str, str]:
+def generate(req: GenerateRequest) -> dict[str, Any]:
+    refusal = screen(req.prompt)
+    if refusal:
+        # answered before any model call or simulation time is spent
+        return {"refused": message(refusal), "topic": refusal.topic, "closest": refusal.closest}
     if req.simulate and not os.environ.get("WOKWI_CLI_TOKEN"):
         raise HTTPException(400, "WOKWI_CLI_TOKEN is not set on the server")
     job_id = uuid.uuid4().hex[:12]

@@ -118,6 +118,13 @@ def generate(
     if simulate and not os.environ.get("WOKWI_CLI_TOKEN"):
         raise typer.BadParameter("--simulate needs WOKWI_CLI_TOKEN in the environment")
 
+    from .scope import message, screen
+
+    refusal = screen(request)
+    if refusal:
+        typer.echo(message(refusal))
+        raise typer.Exit(2)
+
     prov = get_provider(provider)
     workdir = RUNS / "generate" / time.strftime("%Y%m%d-%H%M%S")
     typer.echo(f"request:  {request.strip()}")
