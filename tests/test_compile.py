@@ -70,7 +70,7 @@ def test_second_failure_is_reported(tmp_path, monkeypatch):
     fake, calls = _fake_runs([(1, "", lost), (1, "", lost)], build)
     monkeypatch.setattr(compile_mod.subprocess, "run", fake)
 
-    result, bins = compile_mod.run_compile(sketch, "wokwi-esp32-devkit-v1", build_dir=build)
+    result, _ = compile_mod.run_compile(sketch, "wokwi-esp32-devkit-v1", build_dir=build)
 
     assert not result.passed
     assert len(calls) == 2
