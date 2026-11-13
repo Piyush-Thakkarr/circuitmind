@@ -15,8 +15,8 @@ from ..expand import canonical_json, expand
 from ..ir import Design
 from .compile import run_compile
 from .consistency import run_consistency
-from .lint import run_lint
 from .electrical import run_electrical
+from .lint import run_lint
 from .simulate import run_simulate, write_wokwi_toml
 from .types import Rung, RungResult
 

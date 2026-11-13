@@ -211,10 +211,11 @@ def _current_budget(design: Design) -> tuple[int, list[str]]:
     if total <= USB_LIMIT_MA:
         return total, []
     big = ", ".join(f"{pid} {ma} mA" for pid, ma in sorted(draws, key=lambda d: -d[1]) if ma >= 50)
-    return total, [
+    msg = (
         f"estimated draw {total} mA is over the {USB_LIMIT_MA} mA one USB port gives "
         f"(board {BOARD_MA} mA plus {big}); this needs a separate supply or fewer heavy parts"
-    ]
+    )
+    return total, [msg]
 
 
 def run_electrical(design: Design, cat: Catalogue) -> RungResult:
