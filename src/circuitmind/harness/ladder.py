@@ -16,6 +16,7 @@ from ..ir import Design
 from .compile import run_compile
 from .consistency import run_consistency
 from .lint import run_lint
+from .electrical import run_electrical
 from .simulate import run_simulate, write_wokwi_toml
 from .types import Rung, RungResult
 
@@ -105,6 +106,12 @@ def run_ladder(
         return out
 
     r = run_consistency(design, cat)
+    out.results.append(r)
+    notify(r)
+    if not r.passed:
+        return out
+
+    r = run_electrical(design, cat)
     out.results.append(r)
     notify(r)
     if not r.passed:

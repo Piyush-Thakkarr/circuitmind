@@ -146,6 +146,17 @@ loop records which attempt passed (`passed_attempt`), bench writes both counts, 
 summary table derives pass@1 from attempt counts for result files written before the key
 existed. The pilot's pass@1 (A 1, B 3, C 2, D 3) was recovered that way.
 
+**The electrical rung is wiring rules only, with rough datasheet numbers.**
+It builds the nets from the connections and checks five things the simulator does not:
+rails shorted together, an LED with no resistor on either side (resistors are crossed when
+following a GPIO to a part), servo V+ and HC-SR04 VCC on VIN rather than 3V3, a driven
+part reached from D34/D35/VN/VP, and a current total over 500 mA (one USB 2.0 port). The
+per-part draws are ballpark typical figures from datasheets (SG90 about 250 mA moving,
+28BYJ-48 about 240 mA, HC-SR04 15 mA, DHT22 under 2 mA, MPU6050 under 4 mA) plus 80 mA
+for the board without WiFi. They are for catching a design that cannot run from USB, not
+for measuring anything; the simulator does not model current at all. Every reference
+design passes the rung, and that is a test.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.
