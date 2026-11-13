@@ -15,7 +15,9 @@ from pathlib import Path
 from .types import Rung, RungResult
 
 TIMEOUT_EXIT = 42
+HUNG_EXIT = -1  # wokwi-cli never returned; we killed it
 _SERIAL_TAIL_LINES = 20
+_WALL_GRACE_S = 90  # wall-clock slack on top of the simulated timeout
 
 
 def write_wokwi_toml(project_dir: Path, bin_path: Path, elf_path: Path) -> Path:
@@ -30,9 +32,12 @@ def write_wokwi_toml(project_dir: Path, bin_path: Path, elf_path: Path) -> Path:
 
 def _once(project_dir: Path, scenario: Path, timeout_ms: int) -> tuple[int, str, float]:
     log = project_dir / "serial.log"
+    if log.exists():
+        log.unlink()  # never read a previous run's output
     t0 = time.time()
-    r = subprocess.run(
-        [
+    try:
+        r = subprocess.run(
+            [
             "wokwi-cli",
             str(project_dir),
             "--scenario",
@@ -43,14 +48,23 @@ def _once(project_dir: Path, scenario: Path, timeout_ms: int) -> tuple[int, str,
             str(TIMEOUT_EXIT),
             "--serial-log-file",
             str(log),
-            "--quiet",
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=timeout_ms / 1000 + 120,
-        env={**os.environ},
-    )
+                "--quiet",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout_ms / 1000 + _WALL_GRACE_S,
+            env={**os.environ},
+        )
+    except subprocess.TimeoutExpired as e:
+        # The simulator stalled (slow part, lost connection, upload stuck).
+        # subprocess.run has already killed it. Report it as a failed rung
+        # instead of crashing the whole run.
+        serial = log.read_text(errors="replace") if log.exists() else ""
+        out = (e.stdout or b"") if isinstance(e.stdout, bytes) else (e.stdout or "")
+        if isinstance(out, bytes):
+            out = out.decode(errors="replace")
+        return HUNG_EXIT, serial or out, time.time() - t0
     serial = log.read_text(errors="replace") if log.exists() else ""
     combined = serial or (r.stdout + r.stderr)
     return r.returncode, combined, time.time() - t0
@@ -81,6 +95,11 @@ def run_simulate(
         summary = "scenario passed"
     elif rc == TIMEOUT_EXIT:
         summary = f"timed out after {timeout_ms} ms without the expected serial output"
+    elif rc == HUNG_EXIT:
+        summary = (
+            f"simulator did not return within {timeout_ms // 1000 + _WALL_GRACE_S} s of wall time "
+            "and was stopped; the design may be stalling the simulation"
+        )
     else:
         summary = f"simulation failed (exit {rc})"
     return RungResult(
