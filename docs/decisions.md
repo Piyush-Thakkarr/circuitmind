@@ -157,6 +157,16 @@ for the board without WiFi. They are for catching a design that cannot run from 
 for measuring anything; the simulator does not model current at all. Every reference
 design passes the rung, and that is a test.
 
+**The consistency check resolves helper parameters and pin arrays; constructors stay invisible.**
+A helper like `pressed(int pin)` is resolved from its call sites: if every call passes a
+number or a known constant, the parameter means that set of values. A pin array means all
+its elements, whatever the index. `servo.attach(pin)` and `pulseIn(pin, ...)` count as pin
+uses. Pins handed to a library constructor (`DHT dht(15, DHT22)`, `Stepper(200, 13, 12,
+14, 27)`, `Wire.begin(21, 22)`) are still not seen; those designs pass with nothing
+checked, which the `used_gpio` field makes visible. Output-on-input-only now uses the
+resolved values too, so `const int LED = 34; pinMode(LED, OUTPUT)` is caught. Pass-through
+count on the reference suite went from 1 of 20 to 0 of 20.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.
