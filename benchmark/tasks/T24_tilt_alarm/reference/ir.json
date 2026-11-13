@@ -1,0 +1,57 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "imu1",
+      "type": "wokwi-mpu6050",
+      "attrs": {}
+    },
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "imu1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "imu1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "imu1:SDA",
+      "esp:D21"
+    ],
+    [
+      "imu1:SCL",
+      "esp:D22"
+    ],
+    [
+      "led1:A",
+      "esp:D13"
+    ],
+    [
+      "led1:C",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "#include <Wire.h>\n\nconst int SDA_PIN = 21;\nconst int SCL_PIN = 22;\nconst int LED_PIN = 13;\nconst uint8_t MPU_ADDR = 0x68;\nconst float TILT_G = 0.5;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED_PIN, OUTPUT);\n  Wire.begin(SDA_PIN, SCL_PIN);\n  Wire.setTimeOut(50);\n  Wire.beginTransmission(MPU_ADDR);\n  Wire.write(0x6B);\n  Wire.write(0);\n  if (Wire.endTransmission() != 0) {\n    Serial.println(\"NO_IMU\");\n  }\n}\n\nvoid loop() {\n  Wire.beginTransmission(MPU_ADDR);\n  Wire.write(0x3B);\n  Wire.endTransmission(false);\n  Wire.requestFrom(MPU_ADDR, (uint8_t)6);\n  if (Wire.available() < 6) {\n    delay(200);\n    return;\n  }\n  int16_t rawX = (Wire.read() << 8) | Wire.read();\n  int16_t rawY = (Wire.read() << 8) | Wire.read();\n  int16_t rawZ = (Wire.read() << 8) | Wire.read();\n  float ax = rawX / 16384.0;\n  float ay = rawY / 16384.0;\n  bool tilted = fabs(ax) > TILT_G || fabs(ay) > TILT_G;\n  digitalWrite(LED_PIN, tilted ? HIGH : LOW);\n  Serial.println(tilted ? \"TILT\" : \"LEVEL\");\n  delay(200);\n}\n",
+  "status_line": "LEVEL",
+  "explanation": "MPU6050 on GPIO 21 (SDA) and 22 (SCL) at 0x68, powered from 3V3. Setup writes 0 to the power register 0x6B to wake it. Each loop reads six bytes from 0x3B, converts X and Y to g at the default 16384 counts per g, and calls it TILT when either exceeds 0.5 g. The LED on GPIO 13 follows through a 220 ohm resistor."
+}

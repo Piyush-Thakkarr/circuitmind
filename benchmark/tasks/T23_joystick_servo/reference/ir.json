@@ -1,0 +1,44 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "joy1",
+      "type": "wokwi-analog-joystick",
+      "attrs": {}
+    },
+    {
+      "id": "srv1",
+      "type": "wokwi-servo",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "joy1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "joy1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "joy1:VERT",
+      "esp:D34"
+    ],
+    [
+      "srv1:V+",
+      "esp:VIN"
+    ],
+    [
+      "srv1:GND",
+      "esp:GND.2"
+    ],
+    [
+      "srv1:PWM",
+      "esp:D13"
+    ]
+  ],
+  "firmware": "#include <ESP32Servo.h>\n\nconst int VERT_PIN = 34;\nconst int SERVO_PIN = 13;\nServo servo;\nint angle = 90;\nunsigned long lastPrint = 0;\n\nvoid setup() {\n  Serial.begin(115200);\n  servo.attach(SERVO_PIN);\n}\n\nvoid loop() {\n  int raw = analogRead(VERT_PIN);\n  angle = map(raw, 0, 4095, 0, 180);\n  servo.write(angle);\n  if (millis() - lastPrint >= 200) {\n    lastPrint = millis();\n    Serial.print(\"ANGLE=\");\n    Serial.println(angle);\n  }\n  delay(50);\n}\n",
+  "status_line": "ANGLE=",
+  "explanation": "Joystick VERT on GPIO 34 (input-only, ADC1), powered from 3V3 so the full travel spans the 0 to 4095 ADC range. Servo signal on GPIO 13, power from VIN. map() turns the reading into 0 to 180 degrees; the angle is printed every 200 ms."
+}

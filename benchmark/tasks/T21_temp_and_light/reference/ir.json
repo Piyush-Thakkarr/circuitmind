@@ -1,0 +1,44 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "dht1",
+      "type": "wokwi-dht22",
+      "attrs": {}
+    },
+    {
+      "id": "ldr1",
+      "type": "wokwi-photoresistor-sensor",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "dht1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "dht1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "dht1:SDA",
+      "esp:D15"
+    ],
+    [
+      "ldr1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "ldr1:GND",
+      "esp:GND.2"
+    ],
+    [
+      "ldr1:AO",
+      "esp:D34"
+    ]
+  ],
+  "firmware": "#include <DHT.h>\n\nconst int DHT_PIN = 15;\nconst int LDR_PIN = 34;\nDHT dht(DHT_PIN, DHT22);\n\nvoid setup() {\n  Serial.begin(115200);\n  dht.begin();\n}\n\nvoid loop() {\n  delay(2000);\n  float t = dht.readTemperature();\n  if (isnan(t)) {\n    return;\n  }\n  int light = analogRead(LDR_PIN);\n  Serial.print(\"T=\");\n  Serial.print(t);\n  Serial.print(\" L=\");\n  Serial.println(light);\n}\n",
+  "status_line": "T=",
+  "explanation": "DHT22 data on GPIO 15 and the LDR module's analog output on GPIO 34 (input-only, ADC1), both powered from 3V3. Every 2 s one line with both readings."
+}

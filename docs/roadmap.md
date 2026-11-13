@@ -10,12 +10,12 @@ What is done, what is left, in order. Tick items off as PRs merge.
 - Web workspace (static page + local FastAPI engine with live progress).
 - Benchmark runner for configurations A to D.
 - Pilot results on 5 tasks: A 1/5, B 3/5, C 3/5, D 5/5.
-- Benchmark suite at 15 tasks, every reference passes the full ladder.
+- Benchmark suite at 20 tasks (T01 to T15, T21 to T25), every reference passes the full ladder.
 - README with HLD, LLD and simulation-flow diagrams.
 
 ## 1. Finish the task suite (target 25)
 - [ ] T16 to T20: parts not yet used (slide switch, LDR, PIR, 7-segment, relay).
-- [ ] T21 to T25: harder combinations (two sensors, sensor + display, keypad, rotary encoder, stepper).
+- [x] T21 to T25: harder combinations (two sensors, sensor + LCD, joystick + servo, MPU6050 tilt alarm, stepper). Keypad and rotary encoder were dropped: the simulator has no scenario control to press a key or turn the knob, so a task with them could never be checked.
 - Each task: task.yaml, scenario.yaml, reference/ir.json; reference must print `outcome: PASS` from `circuitmind reference <id>`.
 - Keep categories balanced: output_basics, inputs, sensors, actuators, displays.
 

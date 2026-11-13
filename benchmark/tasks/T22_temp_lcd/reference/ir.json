@@ -1,0 +1,50 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "dht1",
+      "type": "wokwi-dht22",
+      "attrs": {}
+    },
+    {
+      "id": "lcd1",
+      "type": "wokwi-lcd1602",
+      "attrs": {
+        "pins": "i2c"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "dht1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "dht1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "dht1:SDA",
+      "esp:D15"
+    ],
+    [
+      "lcd1:GND",
+      "esp:GND.2"
+    ],
+    [
+      "lcd1:VCC",
+      "esp:VIN"
+    ],
+    [
+      "lcd1:SDA",
+      "esp:D21"
+    ],
+    [
+      "lcd1:SCL",
+      "esp:D22"
+    ]
+  ],
+  "firmware": "#include <Wire.h>\n#include <LiquidCrystal_I2C.h>\n#include <DHT.h>\n\nconst int DHT_PIN = 15;\nconst int SDA_PIN = 21;\nconst int SCL_PIN = 22;\nconst uint8_t LCD_ADDR = 0x27;\nDHT dht(DHT_PIN, DHT22);\nLiquidCrystal_I2C lcd(LCD_ADDR, 16, 2);\nbool lcdOk = false;\n\nvoid setup() {\n  Serial.begin(115200);\n  dht.begin();\n  Wire.begin(SDA_PIN, SCL_PIN);\n  Wire.setTimeOut(50);\n  Wire.beginTransmission(LCD_ADDR);\n  if (Wire.endTransmission() != 0) {\n    Serial.println(\"NO_LCD\");\n    return;\n  }\n  lcd.init();\n  lcd.backlight();\n  lcdOk = true;\n}\n\nvoid loop() {\n  delay(2000);\n  if (!lcdOk) {\n    return;\n  }\n  float t = dht.readTemperature();\n  if (isnan(t)) {\n    return;\n  }\n  lcd.setCursor(0, 0);\n  lcd.print(\"Temp: \");\n  lcd.print(t, 1);\n  lcd.print(\" C  \");\n  Serial.print(\"TEMP=\");\n  Serial.println(t);\n}\n",
+  "status_line": "TEMP=",
+  "explanation": "DHT22 data on GPIO 15 from 3V3. LCD backpack on GPIO 21 (SDA) and 22 (SCL), 5 V from VIN, probed at 0x27 first so a wiring mistake prints NO_LCD instead of hanging. Each reading goes to line one of the LCD, then TEMP= on serial."
+}
