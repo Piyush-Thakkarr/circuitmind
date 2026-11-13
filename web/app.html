@@ -264,7 +264,17 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
     fetch(api+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({prompt:prompt, simulate:$('simulate').checked, attempts:parseInt($('attempts').value,10), provider:'groq'})})
     .then(function(r){ if(!r.ok) return r.json().then(function(j){ throw new Error(j.detail||r.status); }); return r.json(); })
-    .then(function(j){ stream(j.job_id); })
+    .then(function(j){
+      if (j.refused){
+        $('go').disabled=false;
+        $('attempts_view').innerHTML='<div class="empty">Not sent to the model: this request is outside what the parts list and simulator can do.</div>';
+        $('result_body').innerHTML='<div class="verdict no">Out of scope<small>'+esc(j.topic)+'</small></div>'+
+          '<p style="color:var(--ink2)">'+esc(j.refused)+'</p>'+
+          '<p style="color:var(--ink3);font-size:13px">Pick one of the example prompts above, or describe the closest buildable part: what should light up, move or print, and when.</p>';
+        return;
+      }
+      stream(j.job_id);
+    })
     .catch(function(err){ $('go').disabled=false; $('attempts_view').innerHTML='<div class="empty">Could not reach the engine: '+esc(err.message)+'. Start it with <code>circuitmind serve</code>.</div>'; });
   });
 

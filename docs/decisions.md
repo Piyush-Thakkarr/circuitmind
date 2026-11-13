@@ -187,6 +187,17 @@ instead of the last rung's summary and detail; the raw text is still there under
 check output" fold on each attempt, because a person debugging wants it and a beginner
 does not.
 
+**Out-of-scope requests are refused by keywords first, then by a model rule.**
+`scope.py` holds eight rules (flying things, mains power, walking robots and arms, wheeled
+vehicles and DC motors, cameras, radios and positioning, wireless and internet features,
+sound playback and voice). A hit returns a plain message with the closest buildable thing
+and no model call or simulation time is spent; the API answers `{"refused": ...}` and the
+CLI exits with code 2. The keywords were checked against all benchmark prompts, which must
+never be screened (that is a test). For requests the keywords miss, the system prompt tells
+the model to build the closest catalogue-only project and say in `explanation` what was
+left out, rather than invent a part. Mains is refused even though a relay module is in the
+catalogue: the relay task uses an LED as the load.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.
