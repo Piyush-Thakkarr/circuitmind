@@ -53,6 +53,14 @@ class RunResult:
     def final(self) -> Attempt | None:
         return self.attempts[-1] if self.attempts else None
 
+    @property
+    def passed_attempt(self) -> int | None:
+        """Number of the attempt that passed (1 is first try), or None."""
+        for a in self.attempts:
+            if a.passed:
+                return a.n
+        return None
+
     def tokens(self) -> tuple[int, int]:
         return (sum(a.reply.usage.tokens_in for a in self.attempts),
                 sum(a.reply.usage.tokens_out for a in self.attempts))
@@ -150,6 +158,7 @@ def run_generation(
     (workdir / "summary.json").write_text(json.dumps({
         "request": request,
         "passed": result.passed,
+        "passed_attempt": result.passed_attempt,
         "attempts": [{"n": a.n, "passed": a.passed, "failed_rung": a.failed_rung,
                       "tokens_in": a.reply.usage.tokens_in, "tokens_out": a.reply.usage.tokens_out,
                       "seconds": round(a.seconds, 1)} for a in result.attempts],

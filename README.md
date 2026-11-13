@@ -29,12 +29,14 @@ The first four checks are free and run on your machine in a few seconds. Only th
 
 That is the research question of the project. Five tasks were run through four versions of the system:
 
-| Version | What it has | Passed (5 tasks) |
-|---|---|---|
-| A | bare model | 1 |
-| B | + parts catalogue in the prompt | 3 |
-| C | + retry on schema, lint, compile, consistency errors | 3 |
-| D | + retry on simulation errors too | 5 |
+| Version | What it has | pass@1 (of 5) | pass@3 (of 5) |
+|---|---|---|---|
+| A | bare model | 1 | 1 |
+| B | + parts catalogue in the prompt | 3 | 3 |
+| C | + retry on schema, lint, compile, consistency errors | 2 | 3 |
+| D | + retry on simulation errors too | 3 | 5 |
+
+pass@1 counts tasks whose first design passed every check. pass@3 counts a pass on any attempt the version allows, up to three. A and B get one attempt, so their two columns are the same. Comparing A's single shot with D's three on pass@3 alone is not fair: part of D's gain is simply more tries. B, C and D send the same first prompt, so their pass@1 numbers (3, 2, 3) should be equal and the spread is sampling noise, which is why repeated runs are planned.
 
 Model: `openai/gpt-oss-120b` on Groq's free tier. Full table, per-task results and caveats in [`benchmark/results/README.md`](benchmark/results/README.md).
 

@@ -138,6 +138,14 @@ uses those ids only because the system prompt gives them as examples. A model de
 calls its button `button1` would fail at simulate for no electrical reason. Not fixed yet;
 the roadmap carries it.
 
+**Results report pass@1 and pass@3, never a single pass count.**
+A and B get one attempt, C and D get three. One "passed" column lets D look better partly
+because it had more tries. pass@1 (first design passed every check) is the like-for-like
+number across all four; pass@3 (any allowed attempt passed) shows what feedback buys. The
+loop records which attempt passed (`passed_attempt`), bench writes both counts, and the
+summary table derives pass@1 from attempt counts for result files written before the key
+existed. The pilot's pass@1 (A 1, B 3, C 2, D 3) was recovered that way.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.
