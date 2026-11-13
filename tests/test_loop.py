@@ -49,8 +49,10 @@ def test_unknown_part_fails_schema_without_toolchain(tmp_path):
     prov = MockProvider([_bad_type(), _bad_type(), _bad_type()])
     res = run_generation("blink", prov, CAT, tmp_path, max_attempts=3, simulate=False)
     assert not res.passed
+    assert res.passed_attempt is None
     assert len(res.attempts) == 3
     assert all(a.failed_rung == "schema" for a in res.attempts)
+    assert json.loads((tmp_path / "summary.json").read_text())["passed_attempt"] is None
     assert "wokwi-fake-led" in res.attempts[0].feedback
 
 
@@ -94,3 +96,4 @@ def test_bad_pin_then_fixed_passes_free_rungs(tmp_path):
     assert (Path(tmp_path) / "attempt_2" / "ir.json").exists()
     summary = json.loads((Path(tmp_path) / "summary.json").read_text())
     assert summary["passed"] is True and summary["attempts"][0]["failed_rung"] == "lint"
+    assert res.passed_attempt == 2 and summary["passed_attempt"] == 2

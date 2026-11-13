@@ -40,6 +40,7 @@ class TaskResult:
     tokens_out: int
     sim_ms: int
     seconds: float
+    passed_attempt: int | None = None
 
 
 def load_tasks(tasks_dir: Path, only: list[str] | None = None) -> list[tuple[dict, Path]]:
@@ -101,17 +102,22 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
     tin, tout = res.tokens()
     return TaskResult(task_id=task["id"], passed=passed, attempts=len(res.attempts),
                       failed_rung="" if passed else failed, tokens_in=tin, tokens_out=tout,
-                      sim_ms=sim_ms, seconds=time.time() - t0)
+                      sim_ms=sim_ms, seconds=time.time() - t0,
+                      passed_attempt=res.passed_attempt if passed else None)
 
 
 def write_results(results_dir: Path, config: str, model: str, cat_hash: str, rows: list[TaskResult]) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     n = len(rows)
     passed = sum(r.passed for r in rows)
+    pass_at_1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
     data = {
         "config": config, "model": model, "catalogue": cat_hash,
         "when": time.strftime("%Y-%m-%d %H:%M:%S"),
         "tasks": n, "passed": passed, "pass_rate": round(passed / n, 3) if n else 0.0,
+        # pass@1: the first design passed every check. pass@3: any attempt the
+        # configuration allows passed (A and B allow one, so both numbers agree).
+        "pass_at_1": pass_at_1, "pass_at_3": passed,
         "mean_attempts_on_pass": round(sum(r.attempts for r in rows if r.passed) / passed, 2) if passed else None,
         "sim_ms_total": sum(r.sim_ms for r in rows),
         "tokens_in": sum(r.tokens_in for r in rows), "tokens_out": sum(r.tokens_out for r in rows),
@@ -122,15 +128,22 @@ def write_results(results_dir: Path, config: str, model: str, cat_hash: str, row
     return p
 
 
+def _pass_at_1(d: dict) -> int:
+    """Read pass@1 from a results file; derive it for files written before the key existed."""
+    if "pass_at_1" in d:
+        return int(d["pass_at_1"])
+    return sum(1 for r in d.get("rows", []) if r.get("passed") and r.get("attempts") == 1)
+
+
 def summary_table(results_dir: Path) -> str:
-    lines = ["| Config | Tasks | Passed | Pass rate | Mean attempts (on pass) | Sim seconds | Tokens in / out |",
+    lines = ["| Config | Tasks | pass@1 | pass@3 | Mean attempts (on pass) | Sim seconds | Tokens in / out |",
              "|---|---|---|---|---|---|---|"]
     for c in "ABCD":
         p = results_dir / f"{c}.json"
         if not p.exists():
             continue
         d = json.loads(p.read_text())
-        lines.append(f"| {c} | {d['tasks']} | {d['passed']} | {d['pass_rate']:.0%} | "
+        lines.append(f"| {c} | {d['tasks']} | {_pass_at_1(d)}/{d['tasks']} | {d['passed']}/{d['tasks']} | "
                      f"{d['mean_attempts_on_pass'] if d['mean_attempts_on_pass'] is not None else '-'} | "
                      f"{d['sim_ms_total']/1000:.0f} | {d['tokens_in']} / {d['tokens_out']} |")
     return "\n".join(lines)

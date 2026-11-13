@@ -4,12 +4,14 @@ Run on 2026-10-18. Model `openai/gpt-oss-120b` via Groq free tier, temperature 0
 
 ## Summary
 
-| Config | Grounding | Retries on | Passed | Pass rate | Mean attempts (on pass) | Simulated seconds | Tokens in / out |
+| Config | Grounding | Retries on | pass@1 | pass@3 | Mean attempts (on pass) | Simulated seconds | Tokens in / out |
 |---|---|---|---|---|---|---|---|
-| A | no | nothing | 1/5 | 20% | 1.0 | 5 | 4935 / 5814 |
-| B | yes | nothing | 3/5 | 60% | 1.0 | 18 | 11620 / 6248 |
-| C | yes | schema, lint, compile, consistency | 3/5 | 60% | 1.33 | 23 | 20229 / 9131 |
-| D | yes | everything incl. simulation | 5/5 | 100% | 1.6 | 29 | 23176 / 9902 |
+| A | no | nothing | 1/5 | 1/5 | 1.0 | 5 | 4935 / 5814 |
+| B | yes | nothing | 3/5 | 3/5 | 1.0 | 18 | 11620 / 6248 |
+| C | yes | schema, lint, compile, consistency | 2/5 | 3/5 | 1.33 | 23 | 20229 / 9131 |
+| D | yes | everything incl. simulation | 3/5 | 5/5 | 1.6 | 29 | 23176 / 9902 |
+
+pass@1: the first design passed every check including simulation. pass@3: some attempt passed, within the attempts the configuration allows (one for A and B, three for C and D). pass@1 was worked out from the per-task attempt counts in the saved JSON; new runs record it directly.
 
 ## Per task
 
@@ -32,6 +34,7 @@ Numbers in brackets are attempts used.
 
 ## Caveats, read these before quoting the table
 
+- A and B get one attempt and C and D get three, so pass@3 is not a like-for-like comparison across the four. Read pass@1 for the effect of grounding and pass@3 for the effect of feedback given the extra tries.
 - Five tasks. Each one is 20 percentage points. This is a pilot, not a result with intervals. The suite is being extended.
 - Temperature 0 on a hosted model is not deterministic. C and D are separate runs, so some of the C to D gap is sampling noise, not only the extra feedback. T05 passing first time in D and failing in C is an example.
 - All tasks are single-board, Arduino framework, catalogue-only parts. Nothing here says anything about harder designs.

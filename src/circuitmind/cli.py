@@ -216,7 +216,9 @@ def bench(
                    f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
     p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, rows)
     typer.echo("")
-    typer.echo(f"{sum(r.passed for r in rows)}/{len(rows)} passed. wrote {p}")
+    n = len(rows)
+    at1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
+    typer.echo(f"pass@1 {at1}/{n}, pass@3 {sum(r.passed for r in rows)}/{n}. wrote {p}")
     typer.echo("")
     typer.echo(summary_table(results_dir))
 
