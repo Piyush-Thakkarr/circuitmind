@@ -1,0 +1,10 @@
+name: T24_tilt_alarm
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "LEVEL"
+  - set-control:
+      part-id: imu1
+      control: accelX
+      value: 0.7
+  - wait-serial: "TILT"

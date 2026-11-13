@@ -1,0 +1,31 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "stp1",
+      "type": "wokwi-stepper-motor",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "stp1:A+",
+      "esp:D13"
+    ],
+    [
+      "stp1:A-",
+      "esp:D12"
+    ],
+    [
+      "stp1:B+",
+      "esp:D14"
+    ],
+    [
+      "stp1:B-",
+      "esp:D27"
+    ]
+  ],
+  "firmware": "#include <Stepper.h>\n\nconst int STEPS_PER_REV = 200;\nconst int A_PLUS = 13;\nconst int A_MINUS = 12;\nconst int B_PLUS = 14;\nconst int B_MINUS = 27;\nStepper motor(STEPS_PER_REV, A_PLUS, A_MINUS, B_PLUS, B_MINUS);\n\nvoid setup() {\n  Serial.begin(115200);\n  motor.setSpeed(60);\n  motor.step(STEPS_PER_REV);\n  delay(200);\n  motor.step(-STEPS_PER_REV);\n  Serial.println(\"DONE\");\n}\n\nvoid loop() {\n  delay(1000);\n}\n",
+  "status_line": "DONE",
+  "explanation": "Coil A on GPIO 13 (A+) and 12 (A-), coil B on GPIO 14 (B+) and 27 (B-). The Stepper library at 60 rpm turns 200 steps forward and 200 back, about 2 s in all, then prints DONE. In simulation the GPIOs drive the coils directly; a real motor needs an H-bridge driver between them."
+}

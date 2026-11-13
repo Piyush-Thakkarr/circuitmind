@@ -1,0 +1,5 @@
+name: T22_temp_lcd
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "TEMP="

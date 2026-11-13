@@ -86,6 +86,25 @@ without depending on the exact default value.
 **Bench runs each task inside try/except and records failed_rung="error".**
 One crashing task used to take the whole sweep down with it.
 
+**T23 and T24 use a joystick and an MPU6050, not a keypad and a rotary encoder.**
+The plan said keypad and KY-040. Wokwi scenarios can only drive parts that have
+automation controls (pushbutton, potentiometer, joystick, MPU6050, photoresistor, HX711
+and a few sensors). The keypad and KY-040 have none: a set-control step on them is
+accepted and silently does nothing, and the sketch sits at its boot line until the
+timeout. A task whose scenario cannot exercise the input only proves the sketch boots,
+so both were replaced with parts the scenario can move (joystick y, MPU6050 accelX).
+
+**Reference checks run one at a time, never in parallel.**
+Two `circuitmind reference` runs started together made arduino-cli create a `build 2`
+directory and fail with "opening dependency file ... No such file or directory". The
+design was fine; the compile just raced. Run them in sequence.
+
+**T25 drives the stepper coils straight from four GPIOs.**
+The catalogue has no driver board. The simulator accepts it and the Stepper library
+sequence is what a real driver would see, so coil pairing and the library call are still
+tested. The guide should say a real build needs an H-bridge between the ESP32 and the
+motor. The Stepper library is now part of the toolchain.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.

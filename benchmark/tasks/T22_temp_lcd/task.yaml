@@ -1,0 +1,13 @@
+id: T22_temp_lcd
+category: displays
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a DHT22 temperature sensor and a 16x2 LCD with an I2C backpack to the
+  ESP32. Every 2 seconds show the temperature on the LCD and also print it to
+  the serial monitor at 115200 baud in the form TEMP=<number>.
+status_line: TEMP=
+timeout_ms: 8000
+notes: >
+  Sensor plus display. Combines T08 and T09: DHT library on a GPIO, LCD on the
+  default I2C pins (D21, D22) at 0x27. The status line is printed after the LCD
+  update, so a sketch that hangs on the I2C bus never reaches it.

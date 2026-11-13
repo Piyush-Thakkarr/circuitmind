@@ -1,0 +1,15 @@
+id: T23_joystick_servo
+category: actuators
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect an analog joystick and a servo to the ESP32. Map the joystick's
+  vertical axis to the servo angle from 0 to 180 degrees, with the stick
+  centred at 90, and update the servo every 50 ms. Every 200 ms print the
+  current angle to the serial monitor at 115200 baud in the form ANGLE=<number>.
+status_line: ANGLE=
+timeout_ms: 8000
+notes: >
+  Two-axis input driving an actuator. Tests picking the right axis pin, ADC on
+  an input-only pin, servo power from VIN and the ESP32Servo library. The
+  scenario pushes the stick to both ends and expects ANGLE=180 then ANGLE=0, so
+  a sketch that reads the wrong axis or never updates fails.

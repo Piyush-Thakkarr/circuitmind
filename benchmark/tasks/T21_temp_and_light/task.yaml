@@ -1,0 +1,13 @@
+id: T21_temp_and_light
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a DHT22 temperature sensor and an LDR light sensor module to the
+  ESP32. Every 2 seconds read both and print one line to the serial monitor at
+  115200 baud in the form T=<temperature> L=<light reading>.
+status_line: T=
+timeout_ms: 8000
+notes: >
+  First task with two sensors in one design. Tests two different interfaces
+  side by side: the DHT one-wire library on a GPIO and the LDR analog output on
+  an ADC pin. NaN temperature readings before the sensor is ready are skipped.
