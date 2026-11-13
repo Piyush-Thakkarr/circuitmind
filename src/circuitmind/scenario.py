@@ -18,6 +18,8 @@ import json
 import re
 from dataclasses import dataclass, field
 
+import yaml
+
 from .harness.electrical import driving_board_pin
 from .ir import Design
 
@@ -74,3 +76,73 @@ def build_scenario(design: Design, prompt: str, *, name: str = "web") -> Scenari
         checks.append("no inputs were exercised: the design has no pushbutton")
     yaml = f"name: {name}\nversion: 1\nauthor: circuitmind\nsteps:\n" + "\n".join(steps) + "\n"
     return Scenario(yaml=yaml, checks=checks)
+
+
+# Which part types a scenario control can drive. Used to map a scenario's part ids
+# onto a model design that chose different ids.
+CONTROL_TYPES: dict[str, tuple[str, ...]] = {
+    "pressed": ("wokwi-pushbutton", "wokwi-analog-joystick"),
+    "x": ("wokwi-analog-joystick",),
+    "y": ("wokwi-analog-joystick",),
+    "position": ("wokwi-potentiometer",),
+    "accelX": ("wokwi-mpu6050",), "accelY": ("wokwi-mpu6050",), "accelZ": ("wokwi-mpu6050",),
+    "rotationX": ("wokwi-mpu6050",), "rotationY": ("wokwi-mpu6050",), "rotationZ": ("wokwi-mpu6050",),
+    "temperature": ("wokwi-dht22", "wokwi-mpu6050", "wokwi-ntc-temperature-sensor", "wokwi-ds18b20"),
+    "humidity": ("wokwi-dht22",),
+    "lux": ("wokwi-photoresistor-sensor",),
+    "distance": ("wokwi-hc-sr04",),
+    "motion": ("wokwi-pir-motion-sensor",),
+}
+
+
+def adapt_to_design(scenario_yaml: str, design: Design) -> tuple[str, list[str], list[str]]:
+    """Point a task scenario's set-control steps at the parts this design actually has.
+
+    A scenario names parts (btn1, joy1). A model design may call its button
+    something else. When exactly one design part can take the control, the step
+    is retargeted and a note says so. When none can, that is a real failure:
+    the design lacks a part the task needs, and the message says which.
+
+    Returns (adapted yaml, notes, missing). Steps whose part-id already names a
+    design part of a fitting type are left alone.
+    """
+    doc = yaml.safe_load(scenario_yaml) or {}
+    types = {p.id: p.type for p in design.parts}
+    notes: list[str] = []
+    missing: list[str] = []
+    remap: dict[str, str] = {}
+    taken: set[str] = set()
+
+    for step in doc.get("steps") or []:
+        if not isinstance(step, dict) or "set-control" not in step:
+            continue
+        sc = step["set-control"]
+        pid = str(sc.get("part-id", ""))
+        control = str(sc.get("control", sc.get("name", "")))
+        fitting = CONTROL_TYPES.get(control)
+        if fitting is None:
+            continue  # a control we do not know; leave the step as written
+        if pid in types and types[pid] in fitting:
+            taken.add(pid)
+            continue
+        if pid in remap:
+            sc["part-id"] = remap[pid]
+            continue
+        candidates = [i for i, t in types.items() if t in fitting and i not in taken and i not in remap.values()]
+        if len(candidates) == 1:
+            remap[pid] = candidates[0]
+            taken.add(candidates[0])
+            sc["part-id"] = candidates[0]
+            notes.append(f"{pid} -> {candidates[0]}")
+        else:
+            kind = " or ".join(t.replace("wokwi-", "") for t in fitting)
+            if candidates:
+                missing.append(
+                    f"the scenario drives a part called {pid} ({kind}) but the design has several "
+                    f"({', '.join(candidates)}) and none is called {pid}; use the part names the request gives"
+                )
+            else:
+                missing.append(f"the scenario needs a {kind} called {pid} but the design has no such part")
+
+    text = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True) if (notes or missing) else scenario_yaml
+    return text, notes, sorted(set(missing))

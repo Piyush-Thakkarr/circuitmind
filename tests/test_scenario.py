@@ -3,7 +3,7 @@
 import yaml
 
 from circuitmind.ir import Design
-from circuitmind.scenario import build_scenario, led_should_be_on
+from circuitmind.scenario import adapt_to_design, build_scenario, led_should_be_on
 
 FW = 'void setup() { Serial.begin(115200); } void loop() { Serial.println("DONE"); }'
 
@@ -56,3 +56,68 @@ def test_design_without_inputs_says_so():
     assert s.checks[0] == "waited for the firmware to print DONE"
     assert s.checks[-1] == "no inputs were exercised: the design has no pushbutton"
     assert "name: D2" in s.yaml
+
+
+
+TASK_SCN = """name: t
+version: 1
+author: circuitmind
+steps:
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - wait-serial: "DONE"
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0
+"""
+
+
+def test_scenario_id_is_mapped_to_the_only_fitting_part():
+    d = _design([("button_a", "wokwi-pushbutton"), ("led1", "wokwi-led"), ("r1", "wokwi-resistor")],
+                [["button_a:1.l", "esp:D4"], ["button_a:2.l", "esp:GND.1"],
+                 ["esp:D2", "r1:1"], ["r1:2", "led1:A"], ["led1:C", "esp:GND.2"]])
+    text, notes, missing = adapt_to_design(TASK_SCN, d)
+    assert missing == [] and notes == ["btn1 -> button_a"]
+    doc = yaml.safe_load(text)
+    assert all(s["set-control"]["part-id"] == "button_a" for s in doc["steps"] if "set-control" in s)
+    assert doc["steps"][1]["wait-serial"] == "DONE"
+
+
+def test_matching_ids_leave_the_scenario_untouched():
+    text, notes, missing = adapt_to_design(TASK_SCN, LED_BTN)
+    assert text == TASK_SCN and notes == [] and missing == []
+
+
+def test_missing_part_is_a_plain_failure_not_a_timeout():
+    d = _design([("led1", "wokwi-led"), ("r1", "wokwi-resistor")],
+                [["esp:D2", "r1:1"], ["r1:2", "led1:A"], ["led1:C", "esp:GND.1"]])
+    _, notes, missing = adapt_to_design(TASK_SCN, d)
+    assert notes == []
+    assert missing == ["the scenario needs a pushbutton or analog-joystick called btn1 but the design has no such part"]
+
+
+def test_two_candidates_are_not_guessed():
+    d = _design([("a", "wokwi-pushbutton"), ("b", "wokwi-pushbutton")],
+                [["a:1.l", "esp:D4"], ["a:2.l", "esp:GND.1"], ["b:1.l", "esp:D5"], ["b:2.l", "esp:GND.2"]])
+    _, notes, missing = adapt_to_design(TASK_SCN, d)
+    assert notes == [] and len(missing) == 1 and "several (a, b)" in missing[0]
+
+
+def test_joystick_and_imu_controls_map_by_type():
+    scn = ("steps:\n  - set-control:\n      part-id: joy1\n      control: y\n      value: 1\n"
+           "  - set-control:\n      part-id: imu1\n      control: accelX\n      value: 0.7\n")
+    d = _design([("stick", "wokwi-analog-joystick"), ("sensor", "wokwi-mpu6050")],
+                [["stick:VERT", "esp:D34"], ["sensor:SDA", "esp:D21"]])
+    _, notes, missing = adapt_to_design(scn, d)
+    assert missing == [] and notes == ["joy1 -> stick", "imu1 -> sensor"]
+
+
+def test_same_name_wrong_type_is_remapped():
+    scn = "steps:\n  - set-control:\n      part-id: btn1\n      control: pressed\n      value: 1\n"
+    d = _design([("btn1", "wokwi-led"), ("sw", "wokwi-pushbutton")],
+                [["btn1:A", "esp:D2"], ["sw:1.l", "esp:D4"]])
+    _, notes, missing = adapt_to_design(scn, d)
+    assert notes == ["btn1 -> sw"] and missing == []
