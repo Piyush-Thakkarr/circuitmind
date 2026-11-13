@@ -218,6 +218,19 @@ def _current_budget(design: Design) -> tuple[int, list[str]]:
     return total, [msg]
 
 
+def driving_board_pin(design: Design, part_id: str, pin: str) -> str | None:
+    """Board GPIO pin (like 'D13') reached from part_id:pin, crossing resistors. None if none."""
+    nets = _Nets(design)
+    n = nets.net(f"{part_id}:{pin}")
+    if n is None:
+        return None
+    for reach in nets.through_resistors(n):
+        for bp in sorted(nets.board_pins(reach)):
+            if bp.startswith("D") and bp[1:].isdigit():
+                return bp
+    return None
+
+
 def run_electrical(design: Design, cat: Catalogue) -> RungResult:
     nets = _Nets(design)
     problems: list[str] = []
