@@ -2,14 +2,15 @@ id: T24_tilt_alarm
 category: sensors
 board: wokwi-esp32-devkit-v1
 prompt: >
-  Connect an MPU6050 accelerometer and a red LED with a series resistor to the
-  ESP32. Every 200 ms read the acceleration. If the board is tilted more than
-  about 30 degrees from level, turn the LED on and print TILT to the serial
-  monitor at 115200 baud; otherwise turn it off and print LEVEL.
+  Connect an MPU6050 accelerometer and a red LED (with a series resistor, on
+  GPIO 13) to the ESP32. Every 200 ms read the acceleration. If the board is
+  tilted more than about 30 degrees from level, turn the LED on and print TILT
+  to the serial monitor at 115200 baud; otherwise turn it off and print LEVEL.
 status_line: LEVEL
 timeout_ms: 8000
 notes: >
   I2C sensor plus an output. Tests the default I2C pins (D21, D22), address
   0x68, waking the device out of sleep, and turning raw accelerometer counts
   into a tilt decision (0.5 g on a horizontal axis is about 30 degrees). The
-  scenario tilts the part with accelX and expects TILT after LEVEL.
+  scenario tilts the part with accelX and expects TILT after LEVEL. The scenario
+  also checks GPIO 13: low at LEVEL, high at TILT.

@@ -10,4 +10,6 @@ timeout_ms: 8000
 notes: >
   Sensor plus display. Combines T08 and T09: DHT library on a GPIO, LCD on the
   default I2C pins (D21, D22) at 0x27. The status line is printed after the LCD
-  update, so a sketch that hangs on the I2C bus never reaches it.
+  update, so a sketch that hangs on the I2C bus never reaches it. No pin check:
+  LCD text cannot be read by wokwi-cli, so the status line after the display
+  update is the check.

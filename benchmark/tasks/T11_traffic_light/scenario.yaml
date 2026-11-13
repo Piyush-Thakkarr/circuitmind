@@ -3,3 +3,34 @@ version: 1
 author: circuitmind
 steps:
   - wait-serial: "CYCLE"
+  - delay: 100ms
+  - expect-pin:
+      part-id: esp
+      name: D25
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D27
+      value: 0
+  - delay: 1000ms
+  - expect-pin:
+      part-id: esp
+      name: D27
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D25
+      value: 0
+  - delay: 1000ms
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D27
+      value: 0

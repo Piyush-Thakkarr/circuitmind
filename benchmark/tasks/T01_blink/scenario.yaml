@@ -3,3 +3,13 @@ version: 1
 author: circuitmind
 steps:
   - wait-serial: "BLINK"
+  - delay: 100ms
+  - expect-pin:
+      part-id: esp
+      name: D2
+      value: 1
+  - delay: 500ms
+  - expect-pin:
+      part-id: esp
+      name: D2
+      value: 0

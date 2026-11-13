@@ -10,4 +10,5 @@ status_line: ANGLE=
 timeout_ms: 5000
 notes: >
   Input drives actuator. Tests ADC on an input-only pin, servo power from VIN,
-  the ESP32Servo library, and map(). Any angle satisfies the status prefix.
+  the ESP32Servo library, and map(). Any angle satisfies the status prefix. No
+  pin check: the servo signal is a pulse train.

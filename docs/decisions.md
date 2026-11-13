@@ -95,8 +95,8 @@ timeout. A task whose scenario cannot exercise the input only proves the sketch 
 so both were replaced with parts the scenario can move (joystick y, MPU6050 accelX).
 
 **The compile rung retries once when arduino-cli loses a file in its own build folder.**
-Seen about one run in three on `circuitmind reference` when the same workdir is deleted
-and rebuilt: "opening dependency file .../build/sketch/sketch.ino.cpp.d: No such file or
+Seen on a handful of `circuitmind reference` runs (3 of 20 in one sweep, and about one
+in three while probing one task) when the same workdir is deleted and rebuilt: "opening dependency file .../build/sketch/sketch.ino.cpp.d: No such file or
 directory" or ".../sketch.ino.cpp.merged: no such file or directory", failing after 8 to
 10 s. The sketch is never at fault and the next run passes. Ruled out: parallel runs (it
 happens alone), cloud sync on the folder, leftover arduino-cli processes, and arduino-cli
@@ -115,6 +115,28 @@ The catalogue has no driver board. The simulator accepts it and the Stepper libr
 sequence is what a real driver would see, so coil pairing and the library call are still
 tested. The guide should say a real build needs an H-bridge between the ESP32 and the
 motor. The Stepper library is now part of the toolchain.
+
+**Scenarios assert pin levels with `expect-pin`, and the prompt names those GPIOs.**
+A status line only proves the sketch printed something. `expect-pin` (part-id `esp`,
+name `D13`, value 0 or 1) checks the real pin level at that moment. A wrong value fails the
+run with "simulation failed (exit 1)", confirmed with a deliberate wrong check before any
+scenario relied on it. The board pin must be written `D2`, not `2`. Because bench runs
+model designs against the same fixed scenario, a pin check only works if the prompt fixes
+the GPIO ("red LED on GPIO 2"), so the seven prompts with pin checks now do. Prompts that
+leave the pin free (sensors, servos, buttons) keep their status-line check only.
+
+**Where a pin check is not possible, the scenario says nothing extra.**
+PWM outputs (LED fade, servo signal) are pulse trains; an instantaneous level check would
+be luck. The stepper coil pattern after a move is a library detail, not the requested
+result. LCD text cannot be read: wokwi-cli has no `expect-text`, only `take-screenshot`
+image comparison, which is brittle and tied to one rendering. Those tasks (T03, T09, T13,
+T15, T22, T23, T25) keep status-line checks only, and their notes say why.
+
+**Scenario part ids and prompts are a known weak spot.**
+set-control steps name the part (`btn1`, `joy1`, `imu1`). The prompts do not; the model
+uses those ids only because the system prompt gives them as examples. A model design that
+calls its button `button1` would fail at simulate for no electrical reason. Not fixed yet;
+the roadmap carries it.
 
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three

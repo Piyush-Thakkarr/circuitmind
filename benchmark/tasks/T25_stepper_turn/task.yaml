@@ -11,4 +11,6 @@ notes: >
   Four-wire actuator. The catalogue has no driver board, so the coil ends go to
   four GPIOs and the simulator drives them directly (fine in simulation, a real
   build needs an H-bridge, which the guide should say). Tests coil pairing
-  (A+/A- and B+/B- in the right order) and the Stepper library.
+  (A+/A- and B+/B- in the right order) and the Stepper library. No pin check:
+  the coil pattern left after a move is a library detail, not the requested
+  result.

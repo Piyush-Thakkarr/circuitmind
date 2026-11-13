@@ -2,13 +2,14 @@ id: T12_button_toggle_led
 category: inputs
 board: wokwi-esp32-devkit-v1
 prompt: >
-  Connect a pushbutton and an LED (with a series resistor) to the ESP32. Use the
-  internal pull-up for the button. Each press toggles the LED on or off. Print
-  LED=ON or LED=OFF to the serial monitor at 115200 baud whenever the state
-  changes.
+  Connect a pushbutton and an LED (with a series resistor, on GPIO 2) to the
+  ESP32. Use the internal pull-up for the button. Each press toggles the LED on
+  or off. Print LED=ON or LED=OFF to the serial monitor at 115200 baud whenever
+  the state changes.
 status_line: LED=
 timeout_ms: 6000
 notes: >
   Toggle, not follow: the LED must stay on after the button is released. The
   scenario presses twice and expects LED=ON then LED=OFF, so a design that
-  mirrors the button state fails on the second check.
+  mirrors the button state fails on the second check. The scenario also checks
+  GPIO 2: low at boot, high after LED=ON, low after LED=OFF.
