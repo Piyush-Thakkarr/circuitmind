@@ -1,0 +1,15 @@
+id: T13_led_fade
+category: output_basics
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect an LED with a series resistor to the ESP32 and fade it smoothly from
+  off to full brightness and back using PWM, taking about 1 second each way.
+  After the first full fade up and down print FADE to the serial monitor at
+  115200 baud.
+status_line: FADE
+timeout_ms: 6000
+notes: >
+  Tests PWM on the ESP32. The reference uses analogWrite, which the ESP32
+  Arduino core maps to its LEDC peripheral. Designs that reach for the older
+  ledcSetup/ledcAttachPin calls may not compile on newer cores, which is the
+  kind of version mistake the compile rung exists to catch.

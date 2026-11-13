@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import time
 from pathlib import Path
 
 import typer
 import yaml
-
-import os
-import time
 
 from . import catalogue as cat_mod
 from .harness import run_ladder
@@ -21,6 +20,7 @@ from .providers import get_provider
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RESULTS = ROOT / "benchmark" / "results"
 TASKS = ROOT / "benchmark" / "tasks"
 RUNS = ROOT / "runs"
 
@@ -171,10 +171,12 @@ def bench(
     config: str = typer.Argument(..., help="A, B, C or D."),
     provider: str = typer.Option("gemini", help="Model provider."),
     only: str = typer.Option(None, help="Comma-separated task ids to run; default all."),
-    results: Path = typer.Option(ROOT / "benchmark" / "results", help="Where results JSON goes."),
+    results: str | None = typer.Option(None, help="Where results JSON goes (default benchmark/results)."),
 ) -> None:
     """Run one benchmark configuration across the task suite."""
     from .bench import CONFIGS, load_tasks, run_task, summary_table, write_results
+
+    results_dir = Path(results) if results else DEFAULT_RESULTS
 
     config = config.upper()
     if config not in CONFIGS:
@@ -212,11 +214,11 @@ def bench(
         rows.append(r)
         typer.echo(f"  {'PASS' if r.passed else 'FAIL':4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
                    f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
-    p = write_results(results, config, getattr(prov, "model", prov.name), cat.hash, rows)
+    p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, rows)
     typer.echo("")
     typer.echo(f"{sum(r.passed for r in rows)}/{len(rows)} passed. wrote {p}")
     typer.echo("")
-    typer.echo(summary_table(results))
+    typer.echo(summary_table(results_dir))
 
 
 @app.command()

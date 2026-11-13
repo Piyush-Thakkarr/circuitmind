@@ -1,0 +1,14 @@
+id: T09_lcd_hello
+category: displays
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a 16x2 LCD with an I2C backpack to the ESP32 and show the word HELLO
+  on the first line. After the text is on the screen print LCD_OK to the serial
+  monitor at 115200 baud.
+status_line: LCD_OK
+timeout_ms: 5000
+notes: >
+  First display task. Tests I2C wiring (SDA on D21, SCL on D22), the lcd1602
+  part in i2c mode, and the LiquidCrystal I2C library at address 0x27. The
+  simulator does not read the screen; the status line confirms the code ran past
+  the display calls without hanging on the bus.

@@ -1,0 +1,33 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "lcd1",
+      "type": "wokwi-lcd1602",
+      "attrs": {
+        "pins": "i2c"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "lcd1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "lcd1:VCC",
+      "esp:VIN"
+    ],
+    [
+      "lcd1:SDA",
+      "esp:D21"
+    ],
+    [
+      "lcd1:SCL",
+      "esp:D22"
+    ]
+  ],
+  "firmware": "#include <Wire.h>\n#include <LiquidCrystal_I2C.h>\n\nconst int SDA_PIN = 21;\nconst int SCL_PIN = 22;\nconst uint8_t LCD_ADDR = 0x27;\nLiquidCrystal_I2C lcd(LCD_ADDR, 16, 2);\n\nvoid setup() {\n  Serial.begin(115200);\n  Serial.println(\"BOOT\");\n  Wire.begin(SDA_PIN, SCL_PIN);\n  Wire.setTimeOut(50);\n  Wire.beginTransmission(LCD_ADDR);\n  uint8_t err = Wire.endTransmission();\n  if (err != 0) {\n    Serial.print(\"NO_LCD err=\");\n    Serial.println(err);\n    return;\n  }\n  Serial.println(\"LCD_FOUND\");\n  lcd.init();\n  lcd.backlight();\n  lcd.setCursor(0, 0);\n  lcd.print(\"HELLO\");\n  Serial.println(\"LCD_OK\");\n}\n\nvoid loop() {\n  delay(1000);\n}\n",
+  "status_line": "LCD_OK",
+  "explanation": "LCD backpack on the default I2C pins, GPIO 21 (SDA) and 22 (SCL), 5 V from VIN. The sketch probes address 0x27 first and reports NO_LCD if nothing answers, so a wiring mistake fails fast instead of hanging. Then HELLO on line one and LCD_OK."
+}

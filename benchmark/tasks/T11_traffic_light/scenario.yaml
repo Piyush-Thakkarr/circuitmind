@@ -1,0 +1,5 @@
+name: T11_traffic_light
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "CYCLE"

@@ -1,0 +1,5 @@
+name: T09_lcd_hello
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "LCD_OK"

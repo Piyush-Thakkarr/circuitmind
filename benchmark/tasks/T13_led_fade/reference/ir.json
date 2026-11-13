@@ -1,0 +1,36 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:D5",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led1:A"
+    ],
+    [
+      "led1:C",
+      "esp:GND.1"
+    ]
+  ],
+  "firmware": "const int LED = 5;\nint fades = 0;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED, OUTPUT);\n}\n\nvoid loop() {\n  for (int b = 0; b <= 255; b += 5) {\n    analogWrite(LED, b);\n    delay(20);\n  }\n  for (int b = 255; b >= 0; b -= 5) {\n    analogWrite(LED, b);\n    delay(20);\n  }\n  if (++fades == 1) Serial.println(\"FADE\");\n}\n",
+  "status_line": "FADE",
+  "explanation": "LED on GPIO 5 through 220 ohms. analogWrite steps brightness 0 to 255 and back, 20 ms per step, about one second each way. FADE after the first round trip."
+}
