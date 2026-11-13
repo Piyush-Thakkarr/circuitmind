@@ -177,6 +177,16 @@ lists them under "What the simulator checked", with a line saying nothing else w
 A run with the simulator switched off is labelled "passed the free checks, not simulated",
 never "verified".
 
+**A failed run is explained in sentences; raw check output sits behind a fold.**
+`failure.py` turns each failed attempt into "Attempt n: <what the check means> (<one-line
+summary>)", picks one suggestion from the last failed rung (schema: name the parts; lint:
+fewer parts; simulate: say exactly what should print and when; a part missing from the
+catalogue: "this needs a part the simulator does not have"), and offers the prompts of
+T01, T03, T04 and T05, the tasks the pilot passed first time. The web page shows that
+instead of the last rung's summary and detail; the raw text is still there under a "raw
+check output" fold on each attempt, because a person debugging wants it and a beginner
+does not.
+
 **Five tasks was a pilot; the numbers A 1/5, B 3/5, C 3/5, D 5/5 are from one run.**
 Temperature 0 is still not deterministic across runs. The plan is 25 tasks and three
 repeats so results are reported as a range.

@@ -27,6 +27,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import catalogue as cat_mod
+from .failure import explain_failure
 from .guide import build_guide
 from .loop import run_generation
 from .providers import get_provider
@@ -127,6 +128,8 @@ def _run(job_id: str, req: GenerateRequest) -> None:
                 result["design"] = json.loads(d.model_dump_json())
                 result["diagram_json"] = final.outcome.diagram_json
                 result["guide"] = build_guide(d, cat, verified=passed)
+            if not passed:
+                result["failure"] = explain_failure(res)
             job["result"] = result
             job["status"] = "done" if passed else "failed"
         except Exception as e:  # noqa: BLE001

@@ -206,13 +206,25 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
     el.className='rung '+state; if (summary) el.title=summary;
   }
   function setStatus(n, text){ var row=attemptRow(n); row.querySelector('.st').textContent=text; }
-  function addFeedback(n, text, bad){ var row=attemptRow(n); var fb=document.createElement('div'); fb.className='fb'; fb.innerHTML=(bad?'<span class="bad">':'')+esc(text)+(bad?'</span>':''); row.appendChild(fb); }
+  function addFeedback(n, text, bad){
+    var row=attemptRow(n); var fb=document.createElement('details'); fb.className='fb';
+    fb.innerHTML='<summary style="cursor:pointer;color:var(--ink3)">raw check output</summary><pre class="code" style="margin-top:6px">'+(bad?'<span class="bad">':'')+esc(text)+(bad?'</span>':'')+'</pre>';
+    row.appendChild(fb);
+  }
 
   function showGuide(res){
     var body=$('result_body');
-    if (!res || !res.design){
-      body.innerHTML='<div class="verdict no">Not verified<small>'+(res && res.attempts ? res.attempts.length+' attempt(s)' : '')+'</small></div>'+
-        '<p style="color:var(--ink2)">The model could not produce a design that passed every check. The last error is shown under the attempts. Try a simpler description or fewer parts.</p>';
+    if (!res || !res.passed){
+      var f=(res && res.failure) || {attempts:[], suggestion:'', examples:[]};
+      var html='<div class="verdict no">Not verified<small>'+(res && res.attempts ? res.attempts.length+' attempt(s)' : '')+'</small></div>';
+      html+='<div class="sec"><h3>What happened</h3><ul class="notes">'+f.attempts.map(function(a){return '<li>'+esc(a.sentence)+'</li>';}).join('')+'</ul></div>';
+      if (f.suggestion) html+='<div class="sec"><h3>What to try</h3><p style="margin:0;color:var(--ink2)">'+esc(f.suggestion)+'</p></div>';
+      if (f.examples && f.examples.length){
+        html+='<div class="sec"><h3>Or try an example that is known to pass</h3><div class="chips" id="ex_chips">'+
+          f.examples.map(function(p){return '<button class="chip" type="button">'+esc(p)+'</button>';}).join('')+'</div></div>';
+      }
+      body.innerHTML=html;
+      var ex=$('ex_chips'); if (ex) ex.addEventListener('click', function(e){ if(e.target.classList.contains('chip')){ $('prompt').value=e.target.textContent; $('prompt').focus(); window.scrollTo(0,0); } });
       return;
     }
     var g=res.guide, d=res.design;
