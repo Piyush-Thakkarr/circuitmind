@@ -94,6 +94,17 @@ accepted and silently does nothing, and the sketch sits at its boot line until t
 timeout. A task whose scenario cannot exercise the input only proves the sketch boots,
 so both were replaced with parts the scenario can move (joystick y, MPU6050 accelX).
 
+**The compile rung retries once when arduino-cli loses a file in its own build folder.**
+Seen about one run in three on `circuitmind reference` when the same workdir is deleted
+and rebuilt: "opening dependency file .../build/sketch/sketch.ino.cpp.d: No such file or
+directory" or ".../sketch.ino.cpp.merged: no such file or directory", failing after 8 to
+10 s. The sketch is never at fault and the next run passes. Ruled out: parallel runs (it
+happens alone), cloud sync on the folder, leftover arduino-cli processes, and arduino-cli
+itself (the same delete-and-rebuild loop by hand passed 7 times out of 7). The cause is
+still unknown. The retry fires only when the missing file is inside the build folder,
+wipes that folder, builds again, and says so in the rung summary ("second try"). A missing
+header or any other error is reported straight away as before.
+
 **Reference checks run one at a time, never in parallel.**
 Two `circuitmind reference` runs started together made arduino-cli create a `build 2`
 directory and fail with "opening dependency file ... No such file or directory". The

@@ -2,10 +2,17 @@
 
 Fixed FQBN, no build scripts, per-job build path. Produces the .bin and .elf
 that wokwi-cli consumes.
+
+arduino-cli sometimes loses a file inside its own build folder part way through
+a build ("opening dependency file .../build/sketch/sketch.ino.cpp.d: No such
+file or directory"). It is rare, it is not caused by the sketch, and the same
+build passes when run again. That one case gets a single retry with a clean
+build folder; every other failure is reported as is.
 """
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -33,14 +40,17 @@ def _error_excerpt(stderr: str) -> str:
     return "\n".join(lines[:_MAX_ERROR_LINES])
 
 
-def run_compile(
-    sketch_dir: Path, board_type: str, *, build_dir: Path, timeout: int = 300
-) -> tuple[RungResult, Binaries | None]:
-    """sketch_dir must contain exactly one .ino named after the directory."""
-    fqbn = FQBN[board_type]
-    build_dir.mkdir(parents=True, exist_ok=True)
-    t0 = time.time()
-    r = subprocess.run(
+def _lost_build_file(output: str, build_dir: Path) -> bool:
+    """True when arduino-cli complains that a file inside build_dir is missing."""
+    needle = str(build_dir).lower()
+    for line in output.lower().splitlines():
+        if "no such file or directory" in line and needle in line:
+            return True
+    return False
+
+
+def _invoke(fqbn: str, sketch_dir: Path, build_dir: Path, timeout: int) -> subprocess.CompletedProcess:
+    return subprocess.run(
         [
             "arduino-cli",
             "compile",
@@ -58,6 +68,22 @@ def run_compile(
         check=False,
         timeout=timeout,
     )
+
+
+def run_compile(
+    sketch_dir: Path, board_type: str, *, build_dir: Path, timeout: int = 300
+) -> tuple[RungResult, Binaries | None]:
+    """sketch_dir must contain exactly one .ino named after the directory."""
+    fqbn = FQBN[board_type]
+    build_dir.mkdir(parents=True, exist_ok=True)
+    t0 = time.time()
+    r = _invoke(fqbn, sketch_dir, build_dir, timeout)
+    retried = False
+    if r.returncode != 0 and _lost_build_file(r.stderr or r.stdout, build_dir):
+        shutil.rmtree(build_dir, ignore_errors=True)
+        build_dir.mkdir(parents=True, exist_ok=True)
+        r = _invoke(fqbn, sketch_dir, build_dir, timeout)
+        retried = True
     secs = time.time() - t0
     if r.returncode != 0:
         return (
@@ -67,7 +93,7 @@ def run_compile(
                 summary="compilation failed",
                 detail=_error_excerpt(r.stderr or r.stdout),
                 seconds=secs,
-                extra={"returncode": r.returncode},
+                extra={"returncode": r.returncode, "retried": retried},
             ),
             None,
         )
@@ -84,8 +110,12 @@ def run_compile(
             ),
             None,
         )
-    size_line = next((ln for ln in r.stdout.splitlines() if "Sketch uses" in ln), "")
+    size_line = next((ln for ln in r.stdout.splitlines() if "Sketch uses" in ln), "").strip()
+    if retried:
+        size_line += " (second try: arduino-cli lost a file in its build folder on the first)"
     return (
-        RungResult(rung=Rung.COMPILE, passed=True, summary=size_line.strip(), seconds=secs),
+        RungResult(
+            rung=Rung.COMPILE, passed=True, summary=size_line, seconds=secs, extra={"retried": retried}
+        ),
         bins,
     )
