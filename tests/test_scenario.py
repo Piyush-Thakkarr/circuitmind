@@ -20,7 +20,8 @@ def _design(parts, connections):
 
 LED_BTN = _design(
     [("btn1", "wokwi-pushbutton"), ("led1", "wokwi-led"), ("r1", "wokwi-resistor")],
-    [["btn1:1.l", "esp:D4"], ["btn1:2.l", "esp:GND.1"], ["esp:D13", "r1:1"], ["r1:2", "led1:A"], ["led1:C", "esp:GND.2"]],
+    [["btn1:1.l", "esp:D4"], ["btn1:2.l", "esp:GND.1"],
+     ["esp:D13", "r1:1"], ["r1:2", "led1:A"], ["led1:C", "esp:GND.2"]],
 )
 
 
