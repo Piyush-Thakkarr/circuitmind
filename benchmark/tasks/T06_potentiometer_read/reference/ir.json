@@ -1,0 +1,27 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "pot1",
+      "type": "wokwi-potentiometer",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "pot1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "pot1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "pot1:SIG",
+      "esp:D34"
+    ]
+  ],
+  "firmware": "const int POT = 34;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(POT, INPUT);\n}\n\nvoid loop() {\n  int v = analogRead(POT);\n  Serial.print(\"POT=\");\n  Serial.println(v);\n  delay(200);\n}\n",
+  "status_line": "POT=",
+  "explanation": "Wiper (SIG) on GPIO 34, an ADC1 input-only pin. Ends on 3V3 and ground. analogRead gives 0 to 4095."
+}

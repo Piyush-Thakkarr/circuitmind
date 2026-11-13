@@ -1,0 +1,13 @@
+id: T10_two_button_counter
+category: inputs
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect two pushbuttons to the ESP32 using internal pull-ups: one counts up,
+  one counts down. Start at zero. Every time the count changes print it to the
+  serial monitor at 115200 baud in the form COUNT=<number>.
+status_line: COUNT=
+timeout_ms: 6000
+notes: >
+  Two inputs sharing one piece of state. The scenario presses the up button
+  twice and waits for COUNT=2, so a design that only counts the first press, or
+  that prints on release instead of press, fails.

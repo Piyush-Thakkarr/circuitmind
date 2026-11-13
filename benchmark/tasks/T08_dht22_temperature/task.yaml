@@ -1,0 +1,14 @@
+id: T08_dht22_temperature
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a DHT22 temperature and humidity sensor to the ESP32. Every 2 seconds
+  read the temperature and print it to the serial monitor at 115200 baud in the
+  form TEMP=<number>.
+status_line: TEMP=
+timeout_ms: 8000
+notes: >
+  First task that needs a third-party library (DHT sensor library by Adafruit).
+  Tests that the model picks a real library, waits the 2 s the sensor needs, and
+  skips NaN readings. Timeout is longer because the first valid reading arrives
+  after about 2.5 s.

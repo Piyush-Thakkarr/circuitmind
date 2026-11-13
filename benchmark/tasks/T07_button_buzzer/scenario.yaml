@@ -1,0 +1,14 @@
+name: T07_button_buzzer
+version: 1
+author: circuitmind
+steps:
+  - delay: 1000ms
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 1
+  - wait-serial: "BEEP"
+  - set-control:
+      part-id: btn1
+      control: pressed
+      value: 0

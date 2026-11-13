@@ -1,0 +1,13 @@
+id: T06_potentiometer_read
+category: inputs
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a potentiometer to the ESP32 and read its position. Every 200 ms print
+  the raw analog reading to the serial monitor at 115200 baud in the form
+  POT=<number>.
+status_line: POT=
+timeout_ms: 5000
+notes: >
+  Tests analog input on an input-only pin (D34 is ADC1 and cannot drive output,
+  which is exactly right here). Power from 3V3, not VIN: the ADC tops out at 3.3
+  V.

@@ -1,0 +1,40 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "btn_up",
+      "type": "wokwi-pushbutton",
+      "attrs": {
+        "color": "green"
+      }
+    },
+    {
+      "id": "btn_down",
+      "type": "wokwi-pushbutton",
+      "attrs": {
+        "color": "red"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "btn_up:1.l",
+      "esp:D4"
+    ],
+    [
+      "btn_up:2.l",
+      "esp:GND.1"
+    ],
+    [
+      "btn_down:1.l",
+      "esp:D5"
+    ],
+    [
+      "btn_down:2.l",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "const int UP = 4;\nconst int DOWN = 5;\nint lastUp = HIGH, lastDown = HIGH;\nint count = 0;\n\nbool pressed(int pin, int &last) {\n  int now = digitalRead(pin);\n  bool edge = false;\n  if (last == HIGH && now == LOW) {\n    delay(30);\n    if (digitalRead(pin) == LOW) edge = true;\n  }\n  last = now;\n  return edge;\n}\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(UP, INPUT_PULLUP);\n  pinMode(DOWN, INPUT_PULLUP);\n}\n\nvoid loop() {\n  bool changed = false;\n  if (pressed(UP, lastUp)) { count++; changed = true; }\n  if (pressed(DOWN, lastDown)) { count--; changed = true; }\n  if (changed) {\n    Serial.print(\"COUNT=\");\n    Serial.println(count);\n  }\n  delay(5);\n}\n",
+  "status_line": "COUNT=",
+  "explanation": "Up on GPIO 4, down on GPIO 5, both to ground with internal pull-ups. Falling edge with debounce changes the count and prints it."
+}

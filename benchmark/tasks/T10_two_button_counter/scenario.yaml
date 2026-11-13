@@ -1,0 +1,24 @@
+name: T10_two_button_counter
+version: 1
+author: circuitmind
+steps:
+  - delay: 500ms
+  - set-control:
+      part-id: btn_up
+      control: pressed
+      value: 1
+  - wait-serial: "COUNT=1"
+  - set-control:
+      part-id: btn_up
+      control: pressed
+      value: 0
+  - delay: 300ms
+  - set-control:
+      part-id: btn_up
+      control: pressed
+      value: 1
+  - wait-serial: "COUNT=2"
+  - set-control:
+      part-id: btn_up
+      control: pressed
+      value: 0

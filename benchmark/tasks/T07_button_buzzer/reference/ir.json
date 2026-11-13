@@ -1,0 +1,38 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "btn1",
+      "type": "wokwi-pushbutton",
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "bz1",
+      "type": "wokwi-buzzer",
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "btn1:1.l",
+      "esp:D4"
+    ],
+    [
+      "btn1:2.l",
+      "esp:GND.1"
+    ],
+    [
+      "bz1:1",
+      "esp:GND.2"
+    ],
+    [
+      "bz1:2",
+      "esp:D13"
+    ]
+  ],
+  "firmware": "const int BTN = 4;\nconst int BUZZ = 13;\nint last = HIGH;\n\nvoid beep(int ms) {\n  unsigned long end = millis() + ms;\n  while (millis() < end) {\n    digitalWrite(BUZZ, HIGH);\n    delayMicroseconds(250);\n    digitalWrite(BUZZ, LOW);\n    delayMicroseconds(250);\n  }\n}\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(BTN, INPUT_PULLUP);\n  pinMode(BUZZ, OUTPUT);\n}\n\nvoid loop() {\n  int now = digitalRead(BTN);\n  if (last == HIGH && now == LOW) {\n    delay(30);\n    if (digitalRead(BTN) == LOW) {\n      beep(200);\n      Serial.println(\"BEEP\");\n    }\n  }\n  last = now;\n  delay(5);\n}\n",
+  "status_line": "BEEP",
+  "explanation": "Button on GPIO 4 with the internal pull-up, buzzer on GPIO 13. A 2 kHz square wave for 200 ms, then BEEP."
+}
