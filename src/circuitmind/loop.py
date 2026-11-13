@@ -131,9 +131,9 @@ def run_generation(
                 scen = scenario_factory(design, adir)
             outcome = run_ladder(design, cat, adir, scenario=scen, timeout_ms=timeout_ms,
                                  simulate=simulate, inject_serial_monitor=inject_serial_monitor,
-                                 on_rung=lambda r: emit("rung", {"attempt": n, "rung": r.rung.value,
-                                                                  "passed": r.passed, "summary": r.summary,
-                                                                  "seconds": r.seconds}))
+                                 on_rung=lambda r, n=n: emit("rung", {"attempt": n, "rung": r.rung.value,
+                                                                       "passed": r.passed, "summary": r.summary,
+                                                                       "seconds": r.seconds}))
 
         feedback = outcome.feedback()
         att = Attempt(n=n, reply=reply, design=design, outcome=outcome, feedback=feedback,
