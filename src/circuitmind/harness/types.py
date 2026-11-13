@@ -11,6 +11,7 @@ class Rung(str, Enum):
     LINT = "lint"
     COMPILE = "compile"
     CONSISTENCY = "consistency"
+    ELECTRICAL = "electrical"
     SIMULATE = "simulate"
 
 

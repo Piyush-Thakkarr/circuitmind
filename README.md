@@ -14,16 +14,17 @@ It never shows you a design it has not watched run.
 
 1. You type what you want. Example: "Blink an LED once a second and print BLINK after two cycles."
 2. A language model writes a small design: which parts, which pin connects to which, the firmware, and a short status line the firmware will print when the job is done (like `BLINK`).
-3. The design goes through five checks, cheapest first:
+3. The design goes through six checks, cheapest first:
    - **Schema**: are all the parts real, are the pin names real, is anything missing?
    - **Lint**: the simulator's own checker looks at the wiring.
    - **Compile**: the firmware is built for a real ESP32 with `arduino-cli`.
    - **Consistency**: the GPIO numbers in the code must match the pins that are actually wired.
+   - **Electrical**: supply rails are not shorted together, every LED has a resistor, 5 V parts (servo, HC-SR04) are on VIN, nothing is driven from an input-only pin, and a rough current total stays under the 500 mA a USB port gives.
    - **Simulate**: the compiled firmware and the wiring are run in the Wokwi simulator, which emulates the ESP32 and the parts. A small script presses any buttons and waits for the status line.
 4. If any check fails, the exact error and the previous design go back to the model, and it tries again. Three tries, then it stops and tells you what went wrong.
 5. If every check passes, you get a wiring guide written for a beginner, a parts list with rough prices, the firmware, and the exact circuit to open in Wokwi.
 
-The first four checks are free and run on your machine in a few seconds. Only the last one costs anything (Wokwi's free tier gives 50 simulated minutes a month), and nothing reaches it that could have been rejected for free.
+The first five checks are free and run on your machine in a few seconds. Only the last one costs anything (Wokwi's free tier gives 50 simulated minutes a month), and nothing reaches it that could have been rejected for free.
 
 ## Does the checking actually help?
 
@@ -86,7 +87,7 @@ Four rules the code is built around, listed at the bottom of the diagram:
 
 This follows one attempt from the model's reply to a verdict.
 
-Down the left are the five checks in order. The model's JSON reply is parsed into a design; if that fails, it is a schema failure and no tool is run at all. Then lint, then compile, then consistency. Each of those is free and takes seconds. The teal "pass" arrows are the only way down; a failure at any step jumps straight to the red line at the bottom.
+Down the left are the five original checks in order (the electrical check, added later, sits between consistency and simulate and is not in the picture yet). The model's JSON reply is parsed into a design; if that fails, it is a schema failure and no tool is run at all. Then lint, then compile, then consistency. Each of those is free and takes seconds. The teal "pass" arrows are the only way down; a failure at any step jumps straight to the red line at the bottom.
 
 Only step 5 leaves the machine. It writes a `wokwi.toml` pointing at the compiled binary, picks a scenario file, and uploads the binary, the wiring and the scenario to Wokwi. A scenario is a tiny script: wait half a second, press any button the design has, then wait for the status line the firmware promised to print.
 
@@ -129,7 +130,7 @@ circuitmind generate - --task T03_servo_sweep --provider groq   # use a benchmar
 # GEMINI_API_KEY with --provider gemini also works (free tier is 20 requests a day on the model tested)
 
 export WOKWI_CLI_TOKEN=wok_...                     # from https://wokwi.com/dashboard/ci
-circuitmind generate - --task T01_blink --simulate # all five checks, spends simulated seconds
+circuitmind generate - --task T01_blink --simulate # all six checks, spends simulated seconds
 ```
 
 Flags on `generate`: `--attempts N` (default 3), `--no-grounded` (leave the catalogue out of the prompt), `--no-feedback` (retry without sending the error back). Those two switches are what versions A to D are built from.

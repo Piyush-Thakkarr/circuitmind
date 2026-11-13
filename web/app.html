@@ -165,7 +165,7 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
 
 <script>
 (function(){
-  var RUNGS = ['schema','lint','compile','consistency','simulate'];
+  var RUNGS = ['schema','lint','compile','consistency','electrical','simulate'];
   var $ = function(id){ return document.getElementById(id); };
   var api = 'http://127.0.0.1:8000';
   try { api = localStorage.getItem('cm_api') || api; } catch(e){}
