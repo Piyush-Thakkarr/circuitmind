@@ -268,3 +268,16 @@ def serve(
     finally:
         if qt:
             qt.stop()
+
+
+@app.command()
+def report(
+    results: str | None = typer.Option(None, help="Results folder (default benchmark/results)."),
+    runs: str = typer.Option("", help="Comma-separated runs/bench/<stamp> folders, for failure categories."),
+) -> None:
+    """Print the write-up tables from the benchmark results files."""
+    from .report import render
+
+    results_dir = Path(results) if results else DEFAULT_RESULTS
+    run_dirs = [Path(r) for r in runs.split(",") if r.strip()]
+    typer.echo(render(results_dir, run_dirs or None))
