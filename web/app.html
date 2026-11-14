@@ -49,7 +49,7 @@
 
       <div class="panel" style="margin-top:22px">
         <h2>Checks</h2>
-        <div id="attempts_view"><div class="empty">Nothing running. Submit a prompt to start.</div></div>
+        <div id="attempts_view"><div class="empty">Nothing running. Submit a prompt to start.<br><span style="font-size:13px">An attempt usually takes 20 to 60 seconds: the model replies in 5 to 10 s, the compile takes 3 s when warm and up to 45 s when cold, and the simulation runs 10 to 30 s.</span></div></div>
       </div>
     </section>
 
@@ -142,14 +142,20 @@
 
   /* attempts view */
   var attempts = {};
+  var maxAttempts = 3, timers = {};
   function attemptRow(n){
     if (attempts[n]) return attempts[n];
     var div=document.createElement('div'); div.className='attempt';
-    div.innerHTML='<div class="hd"><b>Attempt '+n+'</b><span class="st">asking model</span></div><div class="rungs">'+
+    div.innerHTML='<div class="hd"><b>Attempt '+n+' of '+maxAttempts+'</b><span class="st">asking model</span><span class="el" title="time this attempt has taken so far, usually 20 to 60 s">0 s</span></div><div class="rungs">'+
       RUNGS.map(function(r){ return '<span class="rung" data-r="'+r+'"><i></i>'+r+'</span>'; }).join('')+'</div>';
     var host=$('attempts_view'); if (host.querySelector('.empty')) host.innerHTML='';
-    host.appendChild(div); attempts[n]=div; return div;
+    host.appendChild(div); attempts[n]=div;
+    var t0=Date.now(), el=div.querySelector('.el');
+    timers[n]=setInterval(function(){ el.textContent=Math.round((Date.now()-t0)/1000)+' s'; }, 1000);
+    return div;
   }
+  function stopTimer(n){ if (timers[n]){ clearInterval(timers[n]); delete timers[n]; } }
+  function stopAllTimers(){ Object.keys(timers).forEach(stopTimer); }
   function setRung(n, r, state, summary){
     var row=attemptRow(n); var el=row.querySelector('[data-r="'+r+'"]'); if(!el) return;
     el.className='rung '+state; if (summary) el.title=summary;
@@ -167,7 +173,8 @@
     e.preventDefault();
     var prompt=$('prompt').value.trim(); if (prompt.length<5){ toast('Describe the project in a sentence.'); return; }
     if (authRequired() && !CM.auth.user()){ CM.auth.open(); return; }
-    attempts={}; $('attempts_view').innerHTML=''; $('result_body').innerHTML='<div class="empty">Working…</div>';
+    stopAllTimers(); attempts={}; maxAttempts=parseInt($('attempts').value,10)||3;
+    $('attempts_view').innerHTML=''; $('result_body').innerHTML='<div class="empty">Working… the guide appears here when a design passes every check.</div>';
     $('go').disabled=true;
     var headers={'Content-Type':'application/json'};
     if (CM.auth.token()) headers['Authorization']='Bearer '+CM.auth.token();
@@ -213,11 +220,12 @@
         if (!e.passed) setStatus(e.attempt, 'failed at '+e.rung);
       }
       else if (e.kind==='attempt.done'){
+        stopTimer(e.attempt);
         if (e.passed) setStatus(e.attempt,'passed');
-        else setStatus(e.attempt,'failed at '+e.failed_rung+' · sending the error back');
+        else setStatus(e.attempt,'failed at '+e.failed_rung+(e.attempt<maxAttempts?' · sending the error back':' · no attempts left'));
       }
       else if (e.kind==='end'){
-        es.close(); $('go').disabled=false;
+        stopAllTimers(); es.close(); $('go').disabled=false;
         fetch(api+'/jobs/'+jobId).then(function(r){return r.json();}).then(function(j){
           if (j.error){ $('result_body').innerHTML='<div class="verdict no">Engine error</div><pre class="code">'+esc(j.error)+'</pre>'; return; }
           var res=j.result;
@@ -230,7 +238,7 @@
         });
       }
     };
-    es.onerror=function(){ es.close(); $('go').disabled=false; setStatus(current||1,'connection lost'); };
+    es.onerror=function(){ stopAllTimers(); es.close(); $('go').disabled=false; setStatus(current||1,'connection lost'); };
   }
 })();
 </script>

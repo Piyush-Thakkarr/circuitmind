@@ -55,6 +55,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3vw,34px);lin
 .attempt .hd{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:8px}
 .attempt .hd b{font-weight:600}
 .attempt .hd .st{font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.attempt .hd .el{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
 .rungs{display:flex;flex-wrap:wrap;gap:6px}
 .rung{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:6px;border:1px solid var(--line2);color:var(--ink3)}
 .rung i{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
