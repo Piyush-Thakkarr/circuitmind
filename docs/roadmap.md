@@ -46,7 +46,7 @@ The frontend is already deployed on Vercel. The gap is the engine, which runs on
 ## 3. Benchmark runs
 - Budget first: 50 simulated minutes a month on the free tier. Check https://wokwi.com/dashboard/ci before each sweep. The 5-task pilot used about 75 simulated seconds for all four configs; 25 tasks is roughly 6 to 7 minutes per full sweep.
 - [x] Add `--yes` and a printed cost estimate to `circuitmind bench`; it asks before spending. Also `--label run1` so results land in `A_run1.json` and the summary table shows one row per run.
-- [ ] Run A, B, C, D once on all 25 with Groq. Save as results/<config>_run1.json.
+- [ ] Run A, B, C, D once on all 25 with Groq. Save as results/<config>_run1.json. Groq's 200K tokens a day fit A and B on one day, C on the next, D on the third (found 14 Nov; the first A and B, run before two harness normalisations, are kept under results/run0_before_normalisation and not reported).
 - [ ] Repeat twice more on different days (run2, run3). Results are reported as min to max across runs.
 - [ ] One sweep of D with Gemini if budget allows (20 requests a day on the free tier, so it takes days).
 

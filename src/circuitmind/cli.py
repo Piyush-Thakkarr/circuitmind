@@ -203,7 +203,8 @@ def bench(
     likely, worst = estimate_sim_ms(config, tasks)
     requests = len(tasks) * cfg["max_attempts"]
     typer.echo(f"cost: about {likely / 60000:.1f} simulated minutes, {worst / 60000:.1f} at worst, "
-               f"of the 50 a month on the free tier; up to {requests} model requests")
+               f"of the 50 a month on the free tier; up to {requests} model requests "
+               f"(Groq free tier: 200K tokens a day, enough for A and B together, or C, or D)")
     if not yes and not typer.confirm("Spend it?", default=False):
         typer.echo("stopped before spending anything")
         raise typer.Exit(0)
@@ -268,3 +269,16 @@ def serve(
     finally:
         if qt:
             qt.stop()
+
+
+@app.command()
+def report(
+    results: str | None = typer.Option(None, help="Results folder (default benchmark/results)."),
+    runs: str = typer.Option("", help="Comma-separated runs/bench/<stamp> folders, for failure categories."),
+) -> None:
+    """Print the write-up tables from the benchmark results files."""
+    from .report import render
+
+    results_dir = Path(results) if results else DEFAULT_RESULTS
+    run_dirs = [Path(r) for r in runs.split(",") if r.strip()]
+    typer.echo(render(results_dir, run_dirs or None))

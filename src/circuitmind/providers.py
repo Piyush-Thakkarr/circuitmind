@@ -69,13 +69,50 @@ def _board_ref(ref: Any, board: str | None) -> Any:
     return ref
 
 
+_ESCAPES = {"\\n": "\n", "\\t": "\t", "\\r": "", '\\"': '"', "\\\\": "\\"}
+_ESCAPE_RE = re.compile(r"\\\\|\\n|\\t|\\r|\\\"")
+
+
+def unescape_firmware(fw: str) -> str:
+    """Firmware that arrived as one line full of literal backslash-n is unescaped once.
+
+    The model sometimes escapes the sketch twice, so the JSON string holds the
+    two characters backslash and n instead of a newline. Compiled as is, the
+    whole sketch is one #include line and setup() never exists. When there is
+    no real newline but there are literal ones, the usual escapes are undone.
+    """
+    if not fw or "\n" in fw or "\\n" not in fw:
+        return fw
+    return _ESCAPE_RE.sub(lambda m: _ESCAPES[m.group(0)], fw)
+
+
+def _lowercase_ids(parts: list[dict], conns: list[tuple]) -> tuple[list[dict], list[tuple]]:
+    """Part ids with capitals (rA, LED1) become lowercase everywhere, unless that would make two the same."""
+    ids = [p.get("id") for p in parts]
+    mapping = {i: i.lower() for i in ids if isinstance(i, str) and i != i.lower()}
+    if not mapping:
+        return parts, conns
+    lowered = [mapping.get(i, i) for i in ids]
+    if len(set(lowered)) != len(lowered):
+        return parts, conns
+
+    def ref(r):
+        if isinstance(r, str) and ":" in r:
+            pid, pin = r.split(":", 1)
+            return f"{mapping.get(pid, pid)}:{pin}"
+        return r
+
+    return ([{**p, "id": mapping.get(p.get("id"), p.get("id"))} for p in parts],
+            [(ref(a), ref(b)) for a, b in conns])
+
+
 def to_design_dict(wire: dict[str, Any], *, board: str | None = None) -> dict[str, Any]:
     """Wire shape -> the dict ``ir.Design.model_validate`` expects.
 
-    Models mix up the board's type and its id now and then: "board": "esp", or
-    connections written as "wokwi-esp32-devkit-v1:D2". Both mean the same board,
-    so when the board type is known those two slips are put right here rather
-    than failing the schema rung for nothing electrical.
+    Four slips that mean the right thing are put right here instead of failing
+    the schema rung for nothing electrical: "board": "esp" or the board type
+    used as a connection prefix (when the board type is known), part ids with
+    capital letters, and a firmware string escaped twice.
     """
     parts = []
     for p in wire.get("parts", []):
@@ -90,6 +127,7 @@ def to_design_dict(wire: dict[str, Any], *, board: str | None = None) -> dict[st
         else:
             a, b = (tuple(c) + (None, None))[:2]
         conns.append((_board_ref(a, board), _board_ref(b, board)))
+    parts, conns = _lowercase_ids(parts, conns)
     wire_board = wire.get("board")
     if board and (not wire_board or wire_board == BOARD_ID):
         wire_board = board
@@ -97,7 +135,7 @@ def to_design_dict(wire: dict[str, Any], *, board: str | None = None) -> dict[st
         "board": wire_board,
         "parts": parts,
         "connections": conns,
-        "firmware": wire.get("firmware", ""),
+        "firmware": unescape_firmware(wire.get("firmware", "")),
         "status_line": wire.get("status_line", ""),
         "explanation": wire.get("explanation", ""),
     }
