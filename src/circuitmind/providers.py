@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -193,6 +194,30 @@ def retry_wait_seconds(code: int, text: str, headers: Any, attempt: int) -> floa
     return min(wait, _MAX_RETRY_WAIT_S)
 
 
+_DAILY_WAIT_CAP_S = 1800
+_DAILY_WAITS_MAX = 48
+_RETRY_IN_LONG_RE = re.compile(r"try again in\s*(?:(\d+)h)?(?:(\d+)m)?(?:([0-9.]+)s)?", re.IGNORECASE)
+
+
+def daily_window_wait(text: str) -> float | None:
+    """Seconds to wait when a daily token window is full, or None when waiting is pointless.
+
+    Groq's daily cap is a rolling 24 hour window, so tokens come back a little
+    at a time and the 429 says when ("Please try again in 14m18.8s"). A bench
+    sweep that waits that long and carries on finishes by itself overnight;
+    a web request must not wait, so this is used only when
+    CIRCUITMIND_WAIT_FOR_QUOTA is set. Waits over half an hour are not worth it.
+    """
+    if not os.environ.get("CIRCUITMIND_WAIT_FOR_QUOTA"):
+        return None
+    m = _RETRY_IN_LONG_RE.search(text or "")
+    if not m or not any(m.groups()):
+        return None
+    h, mi, sec = (float(x) if x else 0.0 for x in m.groups())
+    wait = h * 3600 + mi * 60 + sec + 2
+    return wait if wait <= _DAILY_WAIT_CAP_S else None
+
+
 class Pacer:
     """Minimum spacing between requests, from an RPM figure."""
 
@@ -309,7 +334,9 @@ class OpenAICompatProvider:
             method="POST",
         )
         last_err: Exception | None = None
-        for attempt in range(_RETRIES_429 + 1):
+        daily_waits = 0
+        attempt = 0
+        while attempt <= _RETRIES_429:
             try:
                 with urllib.request.urlopen(req, timeout=180) as r:
                     return json.loads(r.read())
@@ -318,17 +345,27 @@ class OpenAICompatProvider:
                 if e.code == 400 and "json_schema" in json.dumps(body) and "schema" in text.lower():
                     raise _SchemaUnsupported(text)
                 if e.code == 429 and ("per day" in text.lower() or "daily" in text.lower()):
+                    wait = daily_window_wait(text)
+                    if wait is not None and daily_waits < _DAILY_WAITS_MAX:
+                        daily_waits += 1
+                        print(f"{self.name}: daily token window full, waiting {wait / 60:.0f} min "
+                              f"({daily_waits}/{_DAILY_WAITS_MAX})", file=sys.stderr, flush=True)
+                        time.sleep(wait)
+                        continue
                     raise RuntimeError(f"{self.name} daily quota exhausted: {text[:200]}") from e
                 tries = _RETRIES_429 if e.code == 429 else 3
                 if e.code in (429, 500, 502, 503) and attempt < tries:
                     time.sleep(retry_wait_seconds(e.code, text, e.headers, attempt))
+                    attempt += 1
                     continue
                 raise RuntimeError(f"{self.name} HTTP {e.code}: {text[:400]}") from e
             except (urllib.error.URLError, TimeoutError, OSError) as e:
                 last_err = e
                 if attempt < 3:
                     time.sleep(2 ** attempt + 1)
+                    attempt += 1
                     continue
+                break
         raise RuntimeError(f"{self.name} request failed after retries: {last_err}")
 
     def generate(self, system: str, user: str) -> ModelReply:

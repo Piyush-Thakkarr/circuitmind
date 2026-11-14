@@ -192,6 +192,7 @@ def bench(
         raise typer.BadParameter("config must be A, B, C or D")
     if not os.environ.get("WOKWI_CLI_TOKEN"):
         raise typer.BadParameter("bench needs WOKWI_CLI_TOKEN; every config simulates at least once per task")
+    os.environ["CIRCUITMIND_WAIT_FOR_QUOTA"] = "1"  # a sweep waits out the daily token window; the web app never does
     cat = cat_mod.load()
     prov = get_provider(provider)
     tasks = load_tasks(TASKS, only.split(",") if only else None)

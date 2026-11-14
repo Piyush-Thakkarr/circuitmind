@@ -1,7 +1,12 @@
 """Slips in the model's JSON that mean the right thing are put right, and rate limits are waited out."""
 
 from circuitmind.failure import plain_engine_error
-from circuitmind.providers import retry_wait_seconds, to_design_dict, unescape_firmware
+from circuitmind.providers import (
+    daily_window_wait,
+    retry_wait_seconds,
+    to_design_dict,
+    unescape_firmware,
+)
 
 BOARD = "wokwi-esp32-devkit-v1"
 
@@ -84,3 +89,16 @@ def test_ids_that_would_collide_are_not_lowercased():
             "connections": []}
     d = to_design_dict(wire, board=BOARD)
     assert [p["id"] for p in d["parts"]] == ["rA", "ra"]
+
+
+GROQ_TPD = ("Rate limit reached for model `openai/gpt-oss-120b` ... on tokens per day (TPD): Limit 200000, "
+            "Used 198915, Requested 3073. Please try again in 14m18.815999999s. Need more tokens?")
+
+
+def test_daily_window_wait_only_when_asked(monkeypatch):
+    monkeypatch.delenv("CIRCUITMIND_WAIT_FOR_QUOTA", raising=False)
+    assert daily_window_wait(GROQ_TPD) is None
+    monkeypatch.setenv("CIRCUITMIND_WAIT_FOR_QUOTA", "1")
+    assert abs(daily_window_wait(GROQ_TPD) - (14 * 60 + 18.816 + 2)) < 1e-3
+    assert daily_window_wait(GROQ_TPD.replace("14m18.815999999s", "1h2m")) is None  # over half an hour
+    assert daily_window_wait("Rate limit reached") is None
