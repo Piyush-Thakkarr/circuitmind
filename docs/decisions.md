@@ -318,3 +318,26 @@ the old notes was wrong for this setup. First-attempt pass of T01 from the CLI w
 twice on 14 Nov 2026 (a probe run and a T01 reference). The sketch never ran, so nothing about the
 design was tested; the rung now runs once more when the output carries that mark and the retry is
 flagged in `flake_retry`. A scenario that really failed is still reported at once.
+
+**Two more model slips are normalised before the schema rung: double-escaped firmware and capital ids.**
+In the 14 Nov sweep (config B, before this change) three tasks failed at compile with "undefined
+reference to setup": the model had escaped the sketch twice, so the JSON string held the two
+characters backslash and n instead of newlines and the whole sketch was one #include line. One
+more failed at schema because resistor ids were rA, rB, rC. Both mean the right thing, so
+`to_design_dict` now unescapes a firmware string that has no real newline but has literal ones,
+and lowercases ids (with their connection references) unless two would collide. The 14 Nov A
+and B results are kept under benchmark/results/run0_before_normalisation and are not part of
+the reported runs. Not normalised: dense one-line sketches that trip the Arduino prototype
+generator (one case, T16 in B), which is a real compile failure.
+
+**The MPU6050 libraries the model reaches for are installed.**
+The T24 reference talks to the sensor over Wire directly, but the model writes
+`#include <MPU6050.h>` (Electronic Cats) or the Adafruit one. Both are Library Manager
+libraries, so refusing them would measure the toolchain, not the design. Installed MPU6050,
+Adafruit MPU6050 and Adafruit BusIO; Dockerfile and setup script updated.
+
+**Groq's free tier allows 200K tokens a day on gpt-oss-120b, so one sweep takes three days.**
+The 14 Nov sweep stopped in config C after 69 requests: A used 61K tokens, B 97K, and the
+daily cap (200K TPD on the limits page, 8K a minute) ran out part way through C. A grounded
+prompt is about 2.5K tokens in and 1.4K out; retries carry the previous design and feedback.
+Plan per day: A and B together, then C, then D. The bench command's cost line now says so.

@@ -1,7 +1,7 @@
 """Slips in the model's JSON that mean the right thing are put right, and rate limits are waited out."""
 
 from circuitmind.failure import plain_engine_error
-from circuitmind.providers import retry_wait_seconds, to_design_dict
+from circuitmind.providers import retry_wait_seconds, to_design_dict, unescape_firmware
 
 BOARD = "wokwi-esp32-devkit-v1"
 
@@ -57,3 +57,30 @@ def test_engine_errors_become_sentences():
     assert "HTTP 429" in msg
     assert plain_engine_error(RuntimeError("groq daily quota exhausted: x")).startswith("The free model quota")
     assert plain_engine_error(ValueError("boom")).startswith("Something broke")
+
+
+def test_double_escaped_firmware_is_unescaped_once():
+    fw = '#include <Wire.h>\\n\\nvoid setup(){\\n  Serial.println(\\"OK\\");\\n}\\nvoid loop(){}\\n'
+    out = unescape_firmware(fw)
+    assert out.startswith("#include <Wire.h>\n\nvoid setup(){\n")
+    assert 'Serial.println("OK");' in out
+
+
+def test_firmware_with_real_newlines_is_left_alone():
+    fw = 'void setup(){ Serial.println("a\\nb"); }\nvoid loop(){}\n'
+    assert unescape_firmware(fw) == fw
+
+
+def test_capital_ids_are_lowercased_in_parts_and_connections():
+    wire = {"board": BOARD, "parts": [{"id": "rA", "type": "wokwi-resistor"}, {"id": "Seg1", "type": "wokwi-7segment"}],
+            "connections": [["esp:D13", "rA:1"], ["rA:2", "Seg1:A"]]}
+    d = to_design_dict(wire, board=BOARD)
+    assert [p["id"] for p in d["parts"]] == ["ra", "seg1"]
+    assert d["connections"] == [("esp:D13", "ra:1"), ("ra:2", "seg1:A")]
+
+
+def test_ids_that_would_collide_are_not_lowercased():
+    wire = {"board": BOARD, "parts": [{"id": "rA", "type": "wokwi-resistor"}, {"id": "ra", "type": "wokwi-resistor"}],
+            "connections": []}
+    d = to_design_dict(wire, board=BOARD)
+    assert [p["id"] for p in d["parts"]] == ["rA", "ra"]

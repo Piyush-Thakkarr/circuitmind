@@ -203,7 +203,8 @@ def bench(
     likely, worst = estimate_sim_ms(config, tasks)
     requests = len(tasks) * cfg["max_attempts"]
     typer.echo(f"cost: about {likely / 60000:.1f} simulated minutes, {worst / 60000:.1f} at worst, "
-               f"of the 50 a month on the free tier; up to {requests} model requests")
+               f"of the 50 a month on the free tier; up to {requests} model requests "
+               f"(Groq free tier: 200K tokens a day, enough for A and B together, or C, or D)")
     if not yes and not typer.confirm("Spend it?", default=False):
         typer.echo("stopped before spending anything")
         raise typer.Exit(0)
