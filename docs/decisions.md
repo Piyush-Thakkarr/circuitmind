@@ -258,3 +258,27 @@ banner, and prints a link to the web app with `?engine=<address>`; the page stor
 uses it. The address changes every start, which is why the link, not a fixed URL, is what gets
 shared. The Dockerfile stays in the repo, written for a generic host (user 1000, $PORT), so moving
 to a paid or card-backed host later is a config change, not a rewrite.
+
+**The engine holds no Supabase secret; it acts as the signed-in user.**
+POST /generate carries the user's Supabase access token. The engine asks Supabase who it is
+(GET /auth/v1/user), counts that user's rows in `designs` since midnight UTC for the daily cap,
+and inserts and updates the run's row with the same token. Row-level security does the access
+control: a user can read, insert and update only their own rows, and there is no delete policy,
+so the daily count cannot be reset from the browser. The month's simulation total across every
+user comes from `sim_ms_used_this_month()`, a security-definer function any key may call; the
+engine refuses new simulated runs once used time plus this run's worst case (attempts times the
+8 s scenario timeout) would pass 90 percent of the 50-minute budget. The engine runs open, with no
+sign-in, when the two CIRCUITMIND_SUPABASE_* variables are unset; /health says which mode it is in.
+
+**Simulated time is charged from the simulate rung's wall clock.**
+Wokwi bills simulated time. The rung's wall seconds include upload and connection overhead, so
+they are a little over the true figure, never under. The alternative, charging the full scenario
+timeout per attempt, would overstate use two to three times (a scenario that passes in 3 s of an
+8 s timeout) and empty the budget on paper long before it is empty in fact.
+
+**Sign-in options are Google, email link and guest; guest needs a dashboard toggle.**
+Supabase's built-in mailer only delivers a handful of emails an hour and is meant for team
+members, so the email link is for the owner, not for a stranger. Google is the real path for a
+visitor; the project already had the provider on. Anonymous sign-in ("Continue as a guest") gives a
+teacher a one-click way in and still gets a real user id for the cap; it is off by default and the
+owner turns it on in the dashboard (the API returned `anonymous_provider_disabled` on 14 Nov 2026).

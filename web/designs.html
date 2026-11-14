@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My designs · CircuitMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="CircuitMind home">
+      <svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><rect x="6" y="6" width="14" height="14" rx="2.5" stroke="#E0913B" stroke-width="1.8"/><path d="M9 6V2M13 6V2M17 6V2M9 24v-4M13 24v-4M17 24v-4M6 9H2M6 13H2M6 17H2M24 9h-4M24 13h-4M24 17h-4" stroke="#E0913B" stroke-width="1.6" stroke-linecap="round"/><circle cx="13" cy="13" r="2.4" fill="#5EE6D8"/></svg>
+      CircuitMind
+    </a>
+    <span class="spacer"></span>
+    <a class="btn" href="app.html">Workspace</a>
+    <div class="user" id="userArea"></div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="grid">
+    <section>
+      <h1>My designs</h1>
+      <p class="sub">Every run you started, newest first. Open one to see its build guide again.</p>
+      <div class="list" id="list"><div class="empty">Loading…</div></div>
+    </section>
+    <section class="panel" id="result">
+      <h2>Build guide</h2>
+      <div id="result_body"><div class="empty">Pick a design on the left.</div></div>
+    </section>
+  </div>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="cm.js"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = CM.esc;
+  var LABEL = {verified:'verified in simulation', free_checks:'passed free checks', failed:'not verified', error:'engine error', running:'running'};
+  var CLASS = {verified:'ok', free_checks:'ok', failed:'no', error:'no', running:''};
+
+  function when(iso){ var d=new Date(iso); return d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+
+  function load(){
+    var list=$('list');
+    if (!CM.auth.user()){
+      list.innerHTML='<div class="empty">Sign in to see your designs.</div>';
+      $('result_body').innerHTML='<div class="empty">Pick a design on the left.</div>';
+      return;
+    }
+    list.innerHTML='<div class="empty">Loading…</div>';
+    CM.sb().from('designs').select('id,created_at,prompt,status,simulated,attempts,model,design,guide,diagram,checks,failure')
+      .order('created_at',{ascending:false}).limit(100)
+      .then(function(r){
+        if (r.error){ list.innerHTML='<div class="empty">Could not load: '+esc(r.error.message)+'</div>'; return; }
+        if (!r.data.length){ list.innerHTML='<div class="empty">Nothing yet. Build something in the <a href="app.html">workspace</a>.</div>'; return; }
+        list.innerHTML='';
+        r.data.forEach(function(row){
+          var b=document.createElement('button'); b.type='button'; b.className='card';
+          b.innerHTML='<div class="p"><p class="prompt-text">'+esc(row.prompt)+'</p><div class="meta">'+when(row.created_at)+(row.attempts?' · '+row.attempts+' attempt(s)':'')+'</div></div>'+
+            '<span class="tag '+(CLASS[row.status]||'')+'">'+esc(LABEL[row.status]||row.status)+'</span>';
+          b.addEventListener('click', function(){
+            if (row.status==='running'){ $('result_body').innerHTML='<div class="empty">This run has not finished (or the engine stopped before it did).</div>'; return; }
+            if (!row.guide && row.status!=='failed'){ $('result_body').innerHTML='<div class="empty">No guide was saved for this run.</div>'; return; }
+            CM.renderGuide(CM.rowToResult(row), $('result_body'), {onExample: function(p){ location.href='app.html?prompt='+encodeURIComponent(p); }});
+            if (window.innerWidth<960) $('result').scrollIntoView({behavior:'smooth'});
+          });
+          list.appendChild(b);
+        });
+      });
+  }
+
+  if (CM.auth.ready()){
+    CM.auth.onChange(function(){ CM.auth.renderHeader($('userArea')); load(); });
+    CM.auth.init();
+  } else {
+    $('list').innerHTML='<div class="empty">Sign-in is unavailable (the sign-in script did not load).</div>';
+  }
+})();
+</script>
+</body>
+</html>
