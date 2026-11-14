@@ -30,7 +30,7 @@ COPY --chown=user src ./src
 COPY --chown=user catalogue ./catalogue
 COPY --chown=user benchmark ./benchmark
 COPY --chown=user tools ./tools
-RUN pip install --no-cache-dir --user -e .
+RUN pip install --no-cache-dir --user -e . "esptool==5.3.1"
 
 # Warm the build cache with a trivial ESP32 compile so the first real one is fast
 RUN mkdir -p /tmp/warm/warm && printf 'void setup(){} void loop(){}' > /tmp/warm/warm/warm.ino \

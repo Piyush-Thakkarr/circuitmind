@@ -299,3 +299,22 @@ prompt about 5000) and the old back-off of 3 and 5 s was not enough, so the user
 429 as an "engine error". Providers now retry a 429 up to five times, waiting what the body
 ("try again in 3.59s") or the Retry-After header says plus one second, capped at 45 s, and an
 error that still gets through is turned into one plain sentence by `plain_engine_error`.
+
+**The compile uses esptool from pip when it is on the PATH; that is where the compile time went.**
+Timed on 14 Nov 2026 with arduino-cli 1.5.1 and ESP32 core 3.3.12: a compile took 25 to 30 s with a
+fresh build folder and 23 s with a reused one, core cache or not. A verbose run with timestamps
+showed three esptool launches of 6.5 to 7.6 s each (bootloader image, app image, merged image):
+the esptool the core ships is a one-file bundle that unpacks itself on every start. `pip install
+esptool==5.3.1` (the same version) starts in 0.6 s, and telling the core to use it with two build
+properties (`tools.esptool_py.path`, `tools.esptool_py.cmd`) brings the compile to 11 to 14 s. The
+app image differs only in its build stamp and the T01 scenario passes on it. Skipping the bootloader
+and merged-image steps as well saved nothing more, so they are left alone. The "3 s warm" figure in
+the old notes was wrong for this setup. First-attempt pass of T01 from the CLI with Groq: 48 s wall
+(model 3 s, compile 13 s, simulation 30 s); Wokwi's own wall time for the same sketch ranged from
+11 to 52 s today, so that is the part that is not ours to cut.
+
+**A dropped simulator connection is retried once, like a timeout.**
+"API Error: Connection to transport closed unexpectedly: code 1006" with no serial output came up
+twice on 14 Nov 2026 (a probe run and a T01 reference). The sketch never ran, so nothing about the
+design was tested; the rung now runs once more when the output carries that mark and the retry is
+flagged in `flake_retry`. A scenario that really failed is still reported at once.

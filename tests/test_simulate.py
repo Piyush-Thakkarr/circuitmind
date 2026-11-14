@@ -33,3 +33,36 @@ def test_missing_token_fails_without_running(tmp_path, monkeypatch):
     r = simulate.run_simulate(tmp_path, tmp_path / "scenario.yaml", timeout_ms=1000)
     assert r.passed is False
     assert "WOKWI_CLI_TOKEN" in r.summary
+
+
+def test_connection_drop_is_retried_once(tmp_path, monkeypatch):
+    monkeypatch.setenv("WOKWI_CLI_TOKEN", "test")
+    calls = []
+
+    def fake_once(project_dir, scenario, timeout_ms):
+        calls.append(1)
+        if len(calls) == 1:
+            return 1, "API Error: Connection to transport closed unexpectedly: code 1006", 2.9
+        return 0, "boot\nBLINK\n", 12.0
+
+    monkeypatch.setattr(simulate, "_once", fake_once)
+    r = simulate.run_simulate(tmp_path, tmp_path / "scenario.yaml", timeout_ms=5000)
+    assert r.passed is True
+    assert len(calls) == 2
+    assert r.extra["flake_retry"] is True
+    assert r.seconds == 14.9
+
+
+def test_a_real_scenario_failure_is_not_retried(tmp_path, monkeypatch):
+    monkeypatch.setenv("WOKWI_CLI_TOKEN", "test")
+    calls = []
+
+    def fake_once(project_dir, scenario, timeout_ms):
+        calls.append(1)
+        return 1, "boot\nexpect-pin esp:D2 == 1 failed\n", 3.0
+
+    monkeypatch.setattr(simulate, "_once", fake_once)
+    r = simulate.run_simulate(tmp_path, tmp_path / "scenario.yaml", timeout_ms=5000)
+    assert r.passed is False
+    assert len(calls) == 1
+    assert simulate.connection_flake("") is False

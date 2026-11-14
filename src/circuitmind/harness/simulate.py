@@ -2,7 +2,8 @@
 
 Verdict is the exit code. 0 pass, 42 timeout, anything else failure. The
 serial log is captured for feedback and humans, never for the verdict.
-One automatic retry on timeout, flagged as a possible flake.
+One automatic retry on timeout, and one when the cloud connection dropped
+before the sketch ran; both flagged as a possible flake.
 """
 
 from __future__ import annotations
@@ -28,6 +29,19 @@ def write_wokwi_toml(project_dir: Path, bin_path: Path, elf_path: Path) -> Path:
         f'elf = "{os.path.relpath(elf_path, project_dir)}"\n'
     )
     return toml
+
+
+_FLAKE_MARKS = ("transport closed", "connection to transport", "code 1006", "websocket")
+
+
+def connection_flake(output: str) -> bool:
+    """True when wokwi-cli failed on its connection to the cloud, not on the design.
+
+    Seen as "API Error: Connection to transport closed unexpectedly: code 1006"
+    with no serial output at all (14 Nov 2026, twice).
+    """
+    low = (output or "").lower()
+    return any(m in low for m in _FLAKE_MARKS)
 
 
 def _once(project_dir: Path, scenario: Path, timeout_ms: int) -> tuple[int, str, float]:
@@ -87,6 +101,12 @@ def run_simulate(
         rc2, serial2, secs2 = _once(project_dir, scenario, timeout_ms)
         if rc2 != TIMEOUT_EXIT:
             flake = True
+        rc, serial, secs = rc2, serial2, secs + secs2
+    elif rc not in (0, HUNG_EXIT) and connection_flake(serial):
+        # The simulator dropped the connection before the sketch ran. Nothing
+        # about the design was tested, so one more try is fair.
+        rc2, serial2, secs2 = _once(project_dir, scenario, timeout_ms)
+        flake = rc2 == 0
         rc, serial, secs = rc2, serial2, secs + secs2
 
     tail = "\n".join(serial.strip().splitlines()[-_SERIAL_TAIL_LINES:])

@@ -3,6 +3,14 @@
 Fixed FQBN, no build scripts, per-job build path. Produces the .bin and .elf
 that wokwi-cli consumes.
 
+The ESP32 core runs esptool three times per build (bootloader image, app
+image, merged image). The esptool the core ships is a one-file bundle that
+unpacks itself on every start, about 6.5 s each on this Mac, so those three
+runs were 21 of a 25 s compile. When an esptool from pip is on the PATH (or
+named in CIRCUITMIND_ESPTOOL) the core is told to use it instead; it starts in
+under a second and the compile drops to about 11 s. Same esptool version, same
+arguments, same output.
+
 arduino-cli sometimes loses a file inside its own build folder part way through
 a build ("opening dependency file .../build/sketch/sketch.ino.cpp.d: No such
 file or directory"). It is rare, it is not caused by the sketch, and the same
@@ -12,6 +20,7 @@ build folder; every other failure is reported as is.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import time
@@ -49,20 +58,47 @@ def _lost_build_file(output: str, build_dir: Path) -> bool:
     return False
 
 
+def fast_esptool() -> Path | None:
+    """An esptool that is not the core's slow one-file bundle, or None.
+
+    CIRCUITMIND_ESPTOOL names it outright; otherwise the first ``esptool`` on
+    the PATH is used unless it lives inside the Arduino packages folder.
+    """
+    named = os.environ.get("CIRCUITMIND_ESPTOOL")
+    if named:
+        p = Path(named)
+        return p if p.is_file() else None
+    found = shutil.which("esptool")
+    if not found or "Arduino15" in found or ".arduino15" in found:
+        return None
+    return Path(found)
+
+
+def compile_command(fqbn: str, sketch_dir: Path, build_dir: Path, esptool: Path | None) -> list[str]:
+    cmd = [
+        "arduino-cli",
+        "compile",
+        "--fqbn",
+        fqbn,
+        "--build-path",
+        str(build_dir),
+        "--warnings",
+        "none",
+    ]
+    if esptool is not None:
+        cmd += [
+            "--build-property",
+            f"tools.esptool_py.path={esptool.parent}",
+            "--build-property",
+            f"tools.esptool_py.cmd={esptool.name}",
+        ]
+    cmd.append(str(sketch_dir))
+    return cmd
+
+
 def _invoke(fqbn: str, sketch_dir: Path, build_dir: Path, timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [
-            "arduino-cli",
-            "compile",
-            "--fqbn",
-            fqbn,
-            "--export-binaries",
-            "--build-path",
-            str(build_dir),
-            "--warnings",
-            "none",
-            str(sketch_dir),
-        ],
+        compile_command(fqbn, sketch_dir, build_dir, fast_esptool()),
         capture_output=True,
         text=True,
         check=False,
@@ -115,7 +151,8 @@ def run_compile(
         size_line += " (second try: arduino-cli lost a file in its build folder on the first)"
     return (
         RungResult(
-            rung=Rung.COMPILE, passed=True, summary=size_line, seconds=secs, extra={"retried": retried}
+            rung=Rung.COMPILE, passed=True, summary=size_line, seconds=secs,
+            extra={"retried": retried, "fast_esptool": fast_esptool() is not None},
         ),
         bins,
     )
