@@ -14,3 +14,4 @@ runs/
 .DS_Store
 node_modules/
 web/dist/
+.vercel/

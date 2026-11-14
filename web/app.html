@@ -7,102 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-:root{
-  color-scheme:dark;
-  --bg:#0B1016;--bg2:#111923;--bg3:#16212C;--line:#1F2B38;--line2:#2B3A4A;
-  --ink:#EAF0F5;--ink2:#93A1B0;--ink3:#5F6E7D;
-  --copper:#E0913B;--copper2:#F5B86A;--copper-dim:#6E4A22;
-  --signal:#5EE6D8;--signal-dim:#1C4F4B;--fail:#F0705E;--fail-dim:#4A1F19;
-  --display:"Syne",ui-sans-serif,system-ui,sans-serif;
-  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
-a{color:inherit}
-button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px}
-.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
-@media (max-width:640px){.wrap{width:calc(100% - 32px)}}
-
-.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:rgba(11,16,22,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.nav .wrap{display:flex;align-items:center;gap:20px;height:60px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:800;font-size:18px}
-.brand svg{width:24px;height:24px}
-.nav .spacer{flex:1}
-.conn{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink2)}
-.conn i{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
-.conn.ok i{background:var(--signal);box-shadow:0 0 10px var(--signal)}
-.conn.bad i{background:var(--fail)}
-.conn button{background:transparent;border:1px solid var(--line2);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--ink2)}
-
-main{padding-block:36px 90px}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
-@media (max-width:960px){.grid{grid-template-columns:1fr}}
-
-h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3vw,34px);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px}
-.sub{color:var(--ink2);margin:0 0 20px;max-width:56ch}
-.prompt{display:flex;flex-direction:column;gap:10px;background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:14px}
-.prompt textarea{width:100%;min-height:96px;resize:vertical;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;line-height:1.5;outline:none}
-.prompt textarea::placeholder{color:var(--ink3)}
-.prompt .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:10px 16px;font-weight:500;font-size:14.5px;border:1px solid var(--line2);background:transparent;text-decoration:none;transition:background .15s,border-color .15s}
-.btn:hover{background:var(--bg3)}
-.btn.primary{background:var(--copper);border-color:var(--copper);color:#1A1006}
-.btn.primary:hover{background:var(--copper2)}
-.btn:disabled{opacity:.5;cursor:default}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.chip{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--ink2)}
-.chip:hover{border-color:var(--copper);color:var(--ink)}
-.opt{display:flex;gap:16px;align-items:center;font-size:13.5px;color:var(--ink2);margin-left:auto}
-.opt label{display:flex;gap:6px;align-items:center}
-
-.panel{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px}
-.panel h2{font-family:var(--display);font-weight:800;font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
-.attempt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
-.attempt .hd{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:8px}
-.attempt .hd b{font-weight:600}
-.attempt .hd .st{font-family:var(--mono);font-size:12px;color:var(--ink2)}
-.rungs{display:flex;flex-wrap:wrap;gap:6px}
-.rung{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:6px;border:1px solid var(--line2);color:var(--ink3)}
-.rung i{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
-.rung.active{border-color:var(--copper);color:var(--copper2)}
-.rung.active i{background:var(--copper);animation:pulse 1s infinite}
-.rung.pass{border-color:var(--signal-dim);color:var(--signal)}
-.rung.pass i{background:var(--signal)}
-.rung.fail{border-color:rgba(240,112,94,.5);color:var(--fail)}
-.rung.fail i{background:var(--fail)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.fb{margin-top:10px;background:#070B10;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#C9D3DD;white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto}
-.fb .bad{color:var(--fail)}
-.empty{color:var(--ink3);font-size:14px;padding:18px;text-align:center;border:1px dashed var(--line2);border-radius:10px}
-.verdict{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:10px;margin-bottom:16px;font-weight:600}
-.verdict.ok{background:var(--signal-dim);color:var(--signal)}
-.verdict.no{background:var(--fail-dim);color:var(--fail)}
-.verdict small{font-weight:400;color:var(--ink2);font-family:var(--mono);font-size:12px;margin-left:auto}
-.sec{margin-top:18px}
-.sec h3{font-size:14px;font-weight:600;margin:0 0 8px;color:var(--ink2);letter-spacing:.02em}
-ol.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
-ol.steps li::marker{color:var(--copper2);font-family:var(--mono)}
-table{border-collapse:collapse;width:100%;font-size:14px}
-td,th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{color:var(--ink2);font-weight:500}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
-.notes{margin:0;padding-left:20px;color:var(--ink2);font-size:14px}
-pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#C9D3DD;overflow:auto;max-height:360px}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.toolbar .btn{padding:7px 12px;font-size:13px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:14px;z-index:50}
-.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(5,8,12,.72);backdrop-filter:blur(8px)}
-.modal .box{width:min(460px,100%);background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px}
-.modal h3{font-family:var(--display);font-weight:800;font-size:20px;margin:0 0 6px}
-.modal p{color:var(--ink2);font-size:14px;margin:0 0 14px}
-.modal input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;color:var(--ink);font:inherit;font-family:var(--mono);font-size:14px}
-.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
 <header class="nav">
@@ -113,6 +18,7 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
     </a>
     <span class="spacer"></span>
     <div class="conn" id="conn"><i></i><span id="connText">checking engine</span><button id="connBtn" type="button">Engine URL</button></div>
+    <div class="user" id="userArea"></div>
   </div>
 </header>
 
@@ -132,12 +38,13 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
           </div>
         </div>
       </form>
+      <div class="quota" id="quota" hidden></div>
       <div class="chips" id="chips">
-        <button class="chip" type="button">Blink a red LED once a second and print BLINK after two cycles</button>
+        <button class="chip" type="button">Blink a red LED on GPIO 2 once a second and print BLINK after two cycles</button>
         <button class="chip" type="button">A servo that sweeps 0 to 180 and back when a button is pressed, then prints SWEEP</button>
         <button class="chip" type="button">Read an HC-SR04 and print DIST= followed by centimetres every half second</button>
         <button class="chip" type="button">An RGB LED that cycles red, green, blue for 300 ms each, then prints RGB</button>
-        <button class="chip" type="button">A PIR motion sensor that lights an LED and prints MOTION when triggered</button>
+        <button class="chip" type="button">A pushbutton that toggles an LED on GPIO 2 and prints LED=ON or LED=OFF</button>
       </div>
 
       <div class="panel" style="margin-top:22px">
@@ -163,10 +70,13 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="cm.js"></script>
 <script>
 (function(){
   var RUNGS = ['schema','lint','compile','consistency','electrical','simulate'];
   var $ = function(id){ return document.getElementById(id); };
+  var esc = CM.esc, toast = CM.toast;
   var api = 'http://127.0.0.1:8000';
   try { api = localStorage.getItem('cm_api') || api; } catch(e){}
   var q = new URLSearchParams(location.search);
@@ -177,21 +87,19 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
     try { localStorage.setItem('cm_api', api); } catch(e){}
   }
 
-  function toast(msg){ var t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2200); }
-  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-
   /* engine connection: keep retrying for a while, the engine may still be starting */
-  var connTimer=null, connTries=0, engineOnline=false;
+  var health = null, connTimer=null, connTries=0;
   var CONN_RETRY_MS=5000, CONN_MAX_TRIES=24; /* two minutes */
   function checkConn(reset){
     if (reset){ connTries=0; if (connTimer){ clearTimeout(connTimer); connTimer=null; } }
     var el=$('conn'); el.className='conn'; $('connText').textContent=connTries ? 'engine not answering, retrying ('+connTries+')' : 'checking engine';
     fetch(api+'/health',{cache:'no-store'}).then(function(r){return r.json();}).then(function(h){
-      engineOnline=true; connTries=0;
+      health=h; connTries=0;
       el.className='conn ok';
       $('connText').textContent='engine online' + (h.wokwi ? '' : ', no simulator token');
+      renderQuota();
     }).catch(function(){
-      engineOnline=false; connTries++;
+      health=null; connTries++;
       if (connTries<=CONN_MAX_TRIES){ el.className='conn'; $('connText').textContent='engine not answering, retrying ('+connTries+')'; connTimer=setTimeout(function(){ checkConn(false); }, CONN_RETRY_MS); }
       else { el.className='conn bad'; $('connText').textContent='engine offline'; }
     });
@@ -203,6 +111,34 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
   $('urlModal').addEventListener('click', function(e){ if(e.target===$('urlModal')) $('urlModal').hidden=true; });
 
   $('chips').addEventListener('click', function(e){ if(e.target.classList.contains('chip')){ $('prompt').value=e.target.textContent; $('prompt').focus(); } });
+
+  /* sign-in: required when the engine says so (health.auth); the header shows who you are */
+  var runsToday = null;
+  function authRequired(){ return !!(health && health.auth); }
+  function renderQuota(){
+    var el=$('quota');
+    if (!health){ el.hidden=true; return; }
+    var parts=[];
+    if (authRequired()){
+      if (!CM.auth.user()) parts.push('<span>Sign in to run. Each person gets '+health.runs_per_day+' runs a day.</span>');
+      else if (runsToday!=null) parts.push('<span><b>'+Math.max(0, health.runs_per_day-runsToday)+'</b> of '+health.runs_per_day+' runs left today</span>');
+    }
+    if (health.budget){
+      var b=health.budget, pct=Math.min(100, Math.round(100*b.used_ms/b.total_ms));
+      parts.push('<span>simulator budget this month: '+CM.minutes(b.used_ms)+' of '+CM.minutes(b.total_ms)+' min used</span><span class="bar" title="'+pct+'%"><i style="width:'+pct+'%"></i></span>');
+    }
+    el.innerHTML=parts.join(''); el.hidden=!parts.length;
+  }
+  function refreshRuns(){
+    if (!CM.auth.user()){ runsToday=null; renderQuota(); return; }
+    CM.auth.runsToday().then(function(n){ runsToday=n; renderQuota(); });
+  }
+  if (CM.auth.ready()){
+    CM.auth.onChange(function(){ CM.auth.renderHeader($('userArea')); refreshRuns(); });
+    CM.auth.init();
+  } else {
+    $('userArea').innerHTML='<span class="who">sign-in unavailable</span>';
+  }
 
   /* attempts view */
   var attempts = {};
@@ -224,59 +160,20 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
     fb.innerHTML='<summary style="cursor:pointer;color:var(--ink3)">raw check output</summary><pre class="code" style="margin-top:6px">'+(bad?'<span class="bad">':'')+esc(text)+(bad?'</span>':'')+'</pre>';
     row.appendChild(fb);
   }
-
-  function showGuide(res){
-    var body=$('result_body');
-    if (!res || !res.passed){
-      var f=(res && res.failure) || {attempts:[], suggestion:'', examples:[]};
-      var html='<div class="verdict no">Not verified<small>'+(res && res.attempts ? res.attempts.length+' attempt(s)' : '')+'</small></div>';
-      html+='<div class="sec"><h3>What happened</h3><ul class="notes">'+f.attempts.map(function(a){return '<li>'+esc(a.sentence)+'</li>';}).join('')+'</ul></div>';
-      if (f.suggestion) html+='<div class="sec"><h3>What to try</h3><p style="margin:0;color:var(--ink2)">'+esc(f.suggestion)+'</p></div>';
-      if (f.examples && f.examples.length){
-        html+='<div class="sec"><h3>Or try an example that is known to pass</h3><div class="chips" id="ex_chips">'+
-          f.examples.map(function(p){return '<button class="chip" type="button">'+esc(p)+'</button>';}).join('')+'</div></div>';
-      }
-      body.innerHTML=html;
-      var ex=$('ex_chips'); if (ex) ex.addEventListener('click', function(e){ if(e.target.classList.contains('chip')){ $('prompt').value=e.target.textContent; $('prompt').focus(); window.scrollTo(0,0); } });
-      return;
-    }
-    var g=res.guide, d=res.design;
-    var ok=res.passed, simulated=!!res.simulation;
-    var label = !ok ? 'Not verified' : (simulated ? 'Verified in simulation' : 'Passed the free checks, not simulated');
-    var html='<div class="verdict '+(ok?'ok':'no')+'">'+label+
-      '<small>'+res.model+' · '+res.tokens.in+' in / '+res.tokens.out+' out</small></div>';
-    if (ok && simulated && res.checks && res.checks.length){
-      html+='<div class="sec"><h3>What the simulator checked</h3><ul class="notes">'+res.checks.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+
-        '</ul><p style="color:var(--ink3);font-size:13px;margin:6px 0 0">Nothing beyond this list was tested. Timing, brightness and anything the prompt implied but did not state were not checked.</p></div>';
-    }
-    if (g.summary) html+='<p style="margin:0 0 6px">'+esc(g.summary)+'</p>';
-    html+='<div class="sec"><h3>Wiring, in order</h3><ol class="steps">'+g.wiring.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ol></div>';
-    html+='<div class="sec"><h3>Parts</h3><table><tr><th>Part</th><th class="n">Qty</th><th class="n">Approx ₹</th></tr>'+
-      g.parts.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td class="n">'+p.qty+'</td><td class="n">'+p.approx_inr+'</td></tr>';}).join('')+
-      '<tr><td><b>Total</b></td><td></td><td class="n"><b>'+g.total_inr+'</b></td></tr></table></div>';
-    html+='<div class="sec"><h3>Before you build</h3><ul class="notes">'+g.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></div>';
-    html+='<div class="sec"><h3>Firmware</h3><pre class="code" id="fw">'+esc(g.firmware)+'</pre>'+
-      '<div class="toolbar"><button class="btn" type="button" data-copy="fw">Copy code</button>'+
-      '<button class="btn" type="button" id="dlIno">Download sketch.ino</button>'+
-      '<button class="btn" type="button" id="dlDiag">Download diagram.json</button>'+
-      '<a class="btn" href="https://wokwi.com/projects/new/esp32" target="_blank" rel="noopener">Open Wokwi</a></div>'+
-      '<p style="color:var(--ink3);font-size:13px;margin:8px 0 0">In Wokwi: new ESP32 project, replace diagram.json and the sketch with the downloads, press play. It prints <code>'+esc(g.status_line)+'</code> when it works.</p></div>';
-    body.innerHTML=html;
-    body.querySelector('[data-copy]').addEventListener('click', function(){ navigator.clipboard.writeText(g.firmware).then(function(){toast('Copied');}); });
-    function dl(name, text){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'})); a.download=name; a.click(); }
-    $('dlIno').addEventListener('click', function(){ dl('sketch.ino', g.firmware); });
-    $('dlDiag').addEventListener('click', function(){ dl('diagram.json', res.diagram_json || JSON.stringify(d,null,2)); });
-  }
+  function useExample(p){ $('prompt').value=p; $('prompt').focus(); window.scrollTo(0,0); }
 
   /* submit */
   $('form').addEventListener('submit', function(e){
     e.preventDefault();
     var prompt=$('prompt').value.trim(); if (prompt.length<5){ toast('Describe the project in a sentence.'); return; }
+    if (authRequired() && !CM.auth.user()){ CM.auth.open(); return; }
     attempts={}; $('attempts_view').innerHTML=''; $('result_body').innerHTML='<div class="empty">Working…</div>';
     $('go').disabled=true;
-    fetch(api+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+    var headers={'Content-Type':'application/json'};
+    if (CM.auth.token()) headers['Authorization']='Bearer '+CM.auth.token();
+    fetch(api+'/generate',{method:'POST',headers:headers,
       body:JSON.stringify({prompt:prompt, simulate:$('simulate').checked, attempts:parseInt($('attempts').value,10), provider:'groq'})})
-    .then(function(r){ if(!r.ok) return r.json().then(function(j){ throw new Error(j.detail||r.status); }); return r.json(); })
+    .then(function(r){ if(!r.ok) return r.json().then(function(j){ var err=new Error(j.detail||r.status); err.status=r.status; throw err; }); return r.json(); })
     .then(function(j){
       if (j.refused){
         $('go').disabled=false;
@@ -286,9 +183,21 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
           '<p style="color:var(--ink3);font-size:13px">Pick one of the example prompts above, or describe the closest buildable part: what should light up, move or print, and when.</p>';
         return;
       }
+      refreshRuns();
       stream(j.job_id);
     })
-    .catch(function(err){ $('go').disabled=false; checkConn(true); $('attempts_view').innerHTML='<div class="empty">Could not reach the engine ('+esc(err.message)+'). The engine is the server that compiles and simulates. If this is your own machine, start it with <code>circuitmind serve</code>. If someone shared this page with you, the engine on their side is not running right now; ask them to start it and open the link they give you.</div>'; });
+    .catch(function(err){
+      $('go').disabled=false;
+      if (err.status===401 || err.status===429){
+        $('attempts_view').innerHTML='<div class="empty">'+esc(err.message)+'</div>';
+        $('result_body').innerHTML='<div class="empty">The guide appears here once a design passes every check.</div>';
+        if (err.status===401) CM.auth.open();
+        refreshRuns();
+        return;
+      }
+      checkConn(true);
+      $('attempts_view').innerHTML='<div class="empty">Could not reach the engine ('+esc(err.message)+'). The engine is the server that compiles and simulates. If this is your own machine, start it with <code>circuitmind serve</code>. If someone shared this page with you, the engine on their side is not running right now; ask them to start it and open the link they give you.</div>';
+    });
   });
 
   function stream(jobId){
@@ -301,7 +210,6 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
       else if (e.kind==='rung'){
         setRung(e.attempt, e.rung, e.passed?'pass':'fail', e.summary);
         var i=RUNGS.indexOf(e.rung); if (e.passed && i<RUNGS.length-1 && $('simulate').checked) setRung(e.attempt, RUNGS[i+1], 'active');
-        else if (e.passed && i===3 && !$('simulate').checked) {}
         if (!e.passed) setStatus(e.attempt, 'failed at '+e.rung);
       }
       else if (e.kind==='attempt.done'){
@@ -317,7 +225,8 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
             var last=a.rungs[a.rungs.length-1];
             if (!a.passed && last) addFeedback(a.n, last.rung+': '+last.summary+(last.detail?'\n'+last.detail:''), true);
           });
-          showGuide(res);
+          CM.renderGuide(res, $('result_body'), {onExample: useExample});
+          checkConn(true); /* refreshes the budget figure */
         });
       }
     };

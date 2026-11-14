@@ -8,6 +8,11 @@ GET  /health
 
 Jobs run in a background thread. One at a time, which is what a laptop
 demo needs. State is in memory; the run directory on disk has everything.
+
+When Supabase is configured (see auth.py) POST /generate needs a signed-in
+user's token in the Authorization header, each user gets a few runs a day, new
+simulated runs stop when the month's free budget is nearly spent, and every run
+is saved as a row the user can reopen later.
 """
 
 from __future__ import annotations
@@ -21,11 +26,12 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from . import auth
 from . import catalogue as cat_mod
 from .failure import explain_failure
 from .guide import build_guide
@@ -44,6 +50,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+WEB_TIMEOUT_MS = 8000
+"""Scenario timeout for free-form prompts; also the worst case charged per simulated attempt."""
 
 _jobs: dict[str, dict[str, Any]] = {}
 _lock = threading.Lock()
@@ -72,7 +81,17 @@ def _push(job: dict[str, Any], kind: str, payload: dict[str, Any]) -> None:
         q.put(ev)
 
 
-def _run(job_id: str, req: GenerateRequest) -> None:
+def _sim_ms(res) -> int:
+    """Simulated time this run spent, from the simulate rung's wall time (slightly over, never under)."""
+    total = 0.0
+    for a in res.attempts:
+        for r in a.outcome.results:
+            if r.rung.value == "simulate":
+                total += r.seconds
+    return int(total * 1000)
+
+
+def _run(job_id: str, req: GenerateRequest, user: auth.User | None, design_id: str | None) -> None:
     job = _job(job_id)
     with _worker_busy:
         job["status"] = "running"
@@ -98,7 +117,7 @@ def _run(job_id: str, req: GenerateRequest) -> None:
 
             res = run_generation(
                 req.prompt, prov, cat, workdir,
-                max_attempts=req.attempts, simulate=req.simulate, timeout_ms=8000,
+                max_attempts=req.attempts, simulate=req.simulate, timeout_ms=WEB_TIMEOUT_MS,
                 grounded=True, use_feedback=True, on_event=on_event,
                 scenario_factory=scenario_for,
             )
@@ -133,9 +152,21 @@ def _run(job_id: str, req: GenerateRequest) -> None:
                 result["failure"] = explain_failure(res)
             job["result"] = result
             job["status"] = "done" if passed else "failed"
+            if user and design_id:
+                status = "failed" if not passed else ("verified" if sim_result else "free_checks")
+                auth.update_design(user, design_id, {
+                    "status": status, "simulated": bool(sim_result), "sim_ms": _sim_ms(res),
+                    "attempts": len(res.attempts), "model": result["model"],
+                    "design": result.get("design"), "guide": result.get("guide"),
+                    "diagram": result.get("diagram_json"), "checks": result["checks"],
+                    "failure": result.get("failure"),
+                })
+                result["design_id"] = design_id
         except Exception as e:  # noqa: BLE001
             job["status"] = "error"
             job["error"] = str(e)[:500]
+            if user and design_id:
+                auth.update_design(user, design_id, {"status": "error"})
         finally:
             _push(job, "status", {"status": job["status"], "error": job.get("error")})
             _push(job, "end", {})
@@ -146,7 +177,9 @@ def health() -> dict[str, Any]:
     return {"ok": True, "catalogue": cat_mod.load().hash,
             "providers": {"groq": bool(os.environ.get("GROQ_API_KEY")),
                           "gemini": bool(os.environ.get("GEMINI_API_KEY"))},
-            "wokwi": bool(os.environ.get("WOKWI_CLI_TOKEN"))}
+            "wokwi": bool(os.environ.get("WOKWI_CLI_TOKEN")),
+            "auth": auth.enabled(), "runs_per_day": auth.DAILY_RUN_CAP,
+            "budget": auth.budget_status()}
 
 
 @app.get("/catalogue")
@@ -155,20 +188,42 @@ def catalogue() -> dict[str, Any]:
     return {"hash": c.hash, "parts": c.parts}
 
 
+def _bearer(authorization: str | None) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip() or None
+    return None
+
+
 @app.post("/generate")
-def generate(req: GenerateRequest) -> dict[str, Any]:
+def generate(req: GenerateRequest, authorization: str | None = Header(default=None)) -> dict[str, Any]:
     refusal = screen(req.prompt)
     if refusal:
-        # answered before any model call or simulation time is spent
+        # answered before any model call, sign-in check or simulation time is spent
         return {"refused": message(refusal), "topic": refusal.topic, "closest": refusal.closest}
     if req.simulate and not os.environ.get("WOKWI_CLI_TOKEN"):
         raise HTTPException(400, "WOKWI_CLI_TOKEN is not set on the server")
+
+    user: auth.User | None = None
+    design_id: str | None = None
+    if auth.enabled():
+        try:
+            user = auth.verify(_bearer(authorization))
+        except auth.AuthError as e:
+            raise HTTPException(401, str(e)) from None
+        try:
+            auth.check_allowed(user, simulate=req.simulate, attempts=req.attempts, timeout_ms=WEB_TIMEOUT_MS)
+        except auth.AuthError as e:
+            raise HTTPException(429, str(e)) from None
+        design_id = auth.record_design(user, {"prompt": req.prompt, "status": "running", "simulated": req.simulate})
+        if design_id is None:
+            raise HTTPException(503, "Could not save the run. Try again in a moment.")
+
     job_id = uuid.uuid4().hex[:12]
     with _lock:
         _jobs[job_id] = {"id": job_id, "status": "queued", "prompt": req.prompt, "started": time.time(),
                          "events": [], "subscribers": [], "result": None, "error": None}
-    threading.Thread(target=_run, args=(job_id, req), daemon=True).start()
-    return {"job_id": job_id}
+    threading.Thread(target=_run, args=(job_id, req, user, design_id), daemon=True).start()
+    return {"job_id": job_id, "design_id": design_id}
 
 
 @app.get("/jobs/{job_id}")
