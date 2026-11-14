@@ -2,7 +2,13 @@
 
 import json
 
-from circuitmind.bench import TaskResult, summary_table, write_results
+from circuitmind.bench import (
+    TaskResult,
+    estimate_sim_ms,
+    result_files,
+    summary_table,
+    write_results,
+)
 
 
 def _row(tid, passed, attempts, passed_attempt=None, rung=""):
@@ -31,3 +37,21 @@ def test_summary_table_derives_pass_at_1_for_older_result_files(tmp_path):
     }
     (tmp_path / "C.json").write_text(json.dumps(old))
     assert "| C | 2 | 1/2 | 2/2 |" in summary_table(tmp_path)
+
+
+def test_labelled_runs_get_their_own_file_and_row(tmp_path):
+    rows = [_row("T1", True, 1, 1)]
+    p = write_results(tmp_path, "A", "m", "h", rows, label="run1")
+    assert p.name == "A_run1.json"
+    write_results(tmp_path, "A", "m", "h", rows, label="run2")
+    write_results(tmp_path, "A", "m", "h", rows)
+    assert [f.name for f in result_files(tmp_path, "A")] == ["A.json", "A_run1.json", "A_run2.json"]
+    table = summary_table(tmp_path)
+    assert "| A | 1 |" in table and "| A run1 | 1 |" in table and "| A run2 | 1 |" in table
+
+
+def test_cost_estimate_counts_simulations_per_config():
+    tasks = [({"timeout_ms": 6000}, None), ({"timeout_ms": 8000}, None)]  # 14 s of timeouts
+    assert estimate_sim_ms("A", tasks) == (7000, 28000)   # one final simulation per task
+    assert estimate_sim_ms("C", tasks) == (7000, 28000)   # retries are static, still one simulation
+    assert estimate_sim_ms("D", tasks) == (21000, 84000)  # up to three simulations per task

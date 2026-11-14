@@ -56,6 +56,22 @@ def load_tasks(tasks_dir: Path, only: list[str] | None = None) -> list[tuple[dic
     return out
 
 
+def estimate_sim_ms(config: str, tasks: list[tuple[dict, Path]]) -> tuple[int, int]:
+    """(likely, worst case) simulated milliseconds a sweep of ``config`` can spend.
+
+    Every configuration simulates the final design once; D may also simulate up
+    to three times inside the loop. A scenario that passes stops early, so the
+    likely figure takes half of each task's timeout per simulation; the worst
+    case charges the full timeout every time (a timeout also costs one retry).
+    """
+    cfg = CONFIGS[config]
+    sims = cfg["max_attempts"] if cfg["sim_in_loop"] else 1
+    total_timeout = sum(int(t["timeout_ms"]) for t, _ in tasks)
+    likely = total_timeout * sims // 2
+    worst = total_timeout * sims * 2
+    return likely, worst
+
+
 def _sim_ms(res: RunResult) -> int:
     total = 0
     for a in res.attempts:
@@ -106,7 +122,9 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
                       passed_attempt=res.passed_attempt if passed else None)
 
 
-def write_results(results_dir: Path, config: str, model: str, cat_hash: str, rows: list[TaskResult]) -> Path:
+def write_results(results_dir: Path, config: str, model: str, cat_hash: str, rows: list[TaskResult],
+                  label: str = "") -> Path:
+    """Write ``<config>.json``, or ``<config>_<label>.json`` when a label such as run1 is given."""
     results_dir.mkdir(parents=True, exist_ok=True)
     n = len(rows)
     passed = sum(r.passed for r in rows)
@@ -123,7 +141,8 @@ def write_results(results_dir: Path, config: str, model: str, cat_hash: str, row
         "tokens_in": sum(r.tokens_in for r in rows), "tokens_out": sum(r.tokens_out for r in rows),
         "rows": [r.__dict__ for r in rows],
     }
-    p = results_dir / f"{config}.json"
+    data["label"] = label
+    p = results_dir / (f"{config}_{label}.json" if label else f"{config}.json")
     p.write_text(json.dumps(data, indent=2))
     return p
 
@@ -135,15 +154,21 @@ def _pass_at_1(d: dict) -> int:
     return sum(1 for r in d.get("rows", []) if r.get("passed") and r.get("attempts") == 1)
 
 
+def result_files(results_dir: Path, config: str) -> list[Path]:
+    """``A.json`` and every labelled run ``A_run1.json``, ``A_run2.json``, in name order."""
+    files = [results_dir / f"{config}.json"] + sorted(results_dir.glob(f"{config}_*.json"))
+    return [p for p in files if p.exists()]
+
+
 def summary_table(results_dir: Path) -> str:
+    """One row per results file; a labelled run shows as ``A run1``."""
     lines = ["| Config | Tasks | pass@1 | pass@3 | Mean attempts (on pass) | Sim seconds | Tokens in / out |",
              "|---|---|---|---|---|---|---|"]
     for c in "ABCD":
-        p = results_dir / f"{c}.json"
-        if not p.exists():
-            continue
-        d = json.loads(p.read_text())
-        lines.append(f"| {c} | {d['tasks']} | {_pass_at_1(d)}/{d['tasks']} | {d['passed']}/{d['tasks']} | "
-                     f"{d['mean_attempts_on_pass'] if d['mean_attempts_on_pass'] is not None else '-'} | "
-                     f"{d['sim_ms_total']/1000:.0f} | {d['tokens_in']} / {d['tokens_out']} |")
+        for p in result_files(results_dir, c):
+            d = json.loads(p.read_text())
+            name = f"{c} {d['label']}" if d.get("label") else c
+            lines.append(f"| {name} | {d['tasks']} | {_pass_at_1(d)}/{d['tasks']} | {d['passed']}/{d['tasks']} | "
+                         f"{d['mean_attempts_on_pass'] if d['mean_attempts_on_pass'] is not None else '-'} | "
+                         f"{d['sim_ms_total']/1000:.0f} | {d['tokens_in']} / {d['tokens_out']} |")
     return "\n".join(lines)

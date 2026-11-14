@@ -179,9 +179,11 @@ def bench(
     provider: str = typer.Option("gemini", help="Model provider."),
     only: str = typer.Option(None, help="Comma-separated task ids to run; default all."),
     results: str | None = typer.Option(None, help="Where results JSON goes (default benchmark/results)."),
+    label: str = typer.Option("", help="Suffix for the results file, for example run1 -> A_run1.json."),
+    yes: bool = typer.Option(False, "--yes", help="Spend the estimated simulation time without asking."),
 ) -> None:
-    """Run one benchmark configuration across the task suite."""
-    from .bench import CONFIGS, load_tasks, run_task, summary_table, write_results
+    """Run one benchmark configuration across the task suite. Prints the cost first and asks."""
+    from .bench import CONFIGS, estimate_sim_ms, load_tasks, run_task, summary_table, write_results
 
     results_dir = Path(results) if results else DEFAULT_RESULTS
 
@@ -198,6 +200,13 @@ def bench(
     typer.echo(f"config {config}: grounded={cfg['grounded']} feedback={cfg['use_feedback']} "
                f"attempts={cfg['max_attempts']} sim_in_loop={cfg['sim_in_loop']}")
     typer.echo(f"model {getattr(prov, 'model', prov.name)}, {len(tasks)} tasks, catalogue {cat.hash}")
+    likely, worst = estimate_sim_ms(config, tasks)
+    requests = len(tasks) * cfg["max_attempts"]
+    typer.echo(f"cost: about {likely / 60000:.1f} simulated minutes, {worst / 60000:.1f} at worst, "
+               f"of the 50 a month on the free tier; up to {requests} model requests")
+    if not yes and not typer.confirm("Spend it?", default=False):
+        typer.echo("stopped before spending anything")
+        raise typer.Exit(0)
     typer.echo("")
     rows = []
     for t, tdir in tasks:
@@ -221,7 +230,7 @@ def bench(
         rows.append(r)
         typer.echo(f"  {'PASS' if r.passed else 'FAIL':4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
                    f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
-    p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, rows)
+    p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, rows, label=label)
     typer.echo("")
     n = len(rows)
     at1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
