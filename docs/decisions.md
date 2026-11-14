@@ -282,3 +282,9 @@ members, so the email link is for the owner, not for a stranger. Google is the r
 visitor; the project already had the provider on. Anonymous sign-in ("Continue as a guest") gives a
 teacher a one-click way in and still gets a real user id for the cap; it is off by default and the
 owner turns it on in the dashboard (the API returned `anonymous_provider_disabled` on 14 Nov 2026).
+
+**The workspace says "20 to 60 seconds per attempt" and shows a live counter instead of a progress bar.**
+The parts of an attempt measured on 14 Nov 2026: cold compile 31 to 46 s and simulation 11 to 27 s
+across the five new reference runs, warm compile about 3 s (CLAUDE.md toolchain notes), Groq reply
+5 to 10 s (docs/background.md). A progress bar would have to guess which case it is in; a counter
+next to the stated range is honest and still tells the user whether something is stuck.
