@@ -40,6 +40,7 @@ class LadderOutcome:
 
 
 _STATIC_ENTRY = re.compile(r"\bstatic\s+(?=void\s+(?:setup|loop)\s*\()")
+_ENTRY_HEAD = re.compile(r"[ \t]*(\bvoid\s+(?:setup|loop)\s*\([^)]*\)\s*\{)[ \t]*")
 
 
 def sanitize_firmware(src: str) -> str:
@@ -48,8 +49,22 @@ def sanitize_firmware(src: str) -> str:
     Arduino's build declares setup() and loop() for the core to call, so a
     ``static`` on either one fails to link. Stripping it never changes a
     correct sketch.
+
+    The model also writes whole sketches on one line, ``}void loop(){static
+    int n=0;...``. The Arduino builder works out function prototypes with
+    ctags, which misreads that and declares setup() and loop() static ("was
+    declared 'extern' and later 'static'"). Putting each entry point's head on
+    its own line and a newline after its opening brace is whitespace only, so
+    it cannot change what the code means, and ctags reads it correctly.
     """
-    return _STATIC_ENTRY.sub("", src)
+    src = _STATIC_ENTRY.sub("", src)
+
+    def own_line(m: re.Match) -> str:
+        before = "" if m.start() == 0 or src[m.start() - 1] == "\n" else "\n"
+        after = "" if m.end() >= len(src) or src[m.end()] == "\n" else "\n"
+        return before + m.group(1) + after
+
+    return _ENTRY_HEAD.sub(own_line, src)
 
 
 def _schema_rung(design: Design, cat: Catalogue) -> RungResult:

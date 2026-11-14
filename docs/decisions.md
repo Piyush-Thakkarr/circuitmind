@@ -341,3 +341,12 @@ The 14 Nov sweep stopped in config C after 69 requests: A used 61K tokens, B 97K
 daily cap (200K TPD on the limits page, 8K a minute) ran out part way through C. A grounded
 prompt is about 2.5K tokens in and 1.4K out; retries carry the previous design and feedback.
 Plan per day: A and B together, then C, then D. The bench command's cost line now says so.
+
+**One-line sketches get their setup() and loop() heads on their own lines before compiling.**
+gpt-oss-120b often returns the whole sketch as one line, `}void loop(){static int n=0;...`. The
+Arduino builder works out function prototypes with ctags, which misreads that and emits
+prototypes that make g++ say "'void loop()' was declared 'extern' and later 'static'". Seen on
+T16 in the 14 Nov B run and three times in a row on T01 when C started on 15 Nov; the exact
+failing T01 sketch compiles once a newline is put before each entry point's head and after its
+opening brace (checked with arduino-cli). Newlines are whitespace to C++, so a tidy sketch is
+left byte for byte as it was. This sits next to the `static` strip in `sanitize_firmware`.
