@@ -350,3 +350,11 @@ T16 in the 14 Nov B run and three times in a row on T01 when C started on 15 Nov
 failing T01 sketch compiles once a newline is put before each entry point's head and after its
 opening brace (checked with arduino-cli). Newlines are whitespace to C++, so a tidy sketch is
 left byte for byte as it was. This sits next to the `static` strip in `sanitize_firmware`.
+
+**Groq's daily cap is a rolling 24 hour window; bench sweeps wait it out, the web app never does.**
+The 429 on 15 Nov read "tokens per day (TPD): Limit 200000, Used 198915 ... Please try again in
+14m18s": tokens come back as the ones used 24 hours earlier age out. A sweep now waits what the
+message says (up to 30 minutes at a time, up to 48 times) and carries on, so one command can run
+all four configurations unattended over a day or two. The web engine keeps failing fast with the
+plain "quota used up" sentence, because a person at a browser cannot wait half an hour; the wait
+is switched on only by the bench command (CIRCUITMIND_WAIT_FOR_QUOTA).
