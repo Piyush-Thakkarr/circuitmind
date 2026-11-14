@@ -61,6 +61,24 @@ h1 em{font-style:normal;color:var(--copper2)}
 .prompt input{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;padding:10px 0;outline:none}
 .prompt input::placeholder{color:var(--ink3)}
 .prompt button{white-space:nowrap}
+.scope{font-size:14.5px;color:var(--ink3);max-width:60ch;margin:-14px 0 28px;line-height:1.55}
+.pics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.pics{grid-template-columns:1fr}}
+.pic{display:flex;flex-direction:column;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--ink2);font-size:14.5px;transition:border-color .15s}
+.pic:hover{border-color:var(--line2)}
+.pic img{width:100%;height:auto;border-radius:8px;background:#fff;display:block}
+.pic b{color:var(--ink);font-weight:600}
+#signinModal .box{width:min(460px,100%);position:relative}
+#signinModal p{color:var(--ink2);font-size:14px;margin:0 0 14px}
+#signinModal .choice{display:flex;flex-direction:column;gap:10px}
+#signinModal .or{margin:4px 0}
+#signinModal .or::before,#signinModal .or::after{content:"";flex:1;height:1px;background:var(--line)}
+#signinModal label{display:block;font-size:13px;color:var(--ink2);margin-bottom:6px}
+#signinModal input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;color:var(--ink);font:inherit;font-size:14px}
+#signinModal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+#signinModal .btn{width:auto;justify-content:center}
+#signinModal .msg{font-size:13px;color:var(--signal);margin-top:10px;min-height:1.2em}
+#signinModal .msg.bad{color:var(--fail)}
 .hero-foot{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:22px;font-size:13.5px;color:var(--ink2);font-family:var(--mono)}
 .hero-foot span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--copper);margin-right:8px;vertical-align:2px}
 .hero-side{display:flex;flex-direction:column;gap:12px}
@@ -194,9 +212,9 @@ footer a:hover{color:var(--ink)}
       <a href="#physics">Mechanical builds</a>
       <a href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">GitHub</a>
     </nav>
-    <div class="nav-cta">
-      <button class="btn" data-open-login>Log in</button>
-      <a class="btn primary" href="app.html">Get started</a>
+    <div class="nav-cta" id="navAuth">
+      <button class="btn" type="button" data-signin>Sign in</button>
+      <a class="btn primary" href="app.html">Open workspace</a>
     </div>
   </div>
 </header>
@@ -209,6 +227,7 @@ footer a:hover{color:var(--ink)}
       <p class="kicker"><i></i>Simulator-verified electronics</p>
       <h1>Describe it. It gets wired, coded, and <em>proven to run</em> before you see it.</h1>
       <p class="lede">CircuitMind turns a plain-English idea into an ESP32 circuit and firmware, then runs it in a simulator. If it fails, the exact error goes back to the AI and it tries again. You only ever see a design that passed.</p>
+      <p class="scope">It builds what an ESP32 DevKit v1 and about thirty simulator parts can do: LEDs, buttons, buzzers, a servo, a small stepper, distance, temperature, light and tilt sensors, small displays, a relay. It refuses what it cannot check: drones, mains power, motor drivers, cameras, radios, anything with wheels or legs.</p>
       <form class="prompt" id="promptForm" autocomplete="off">
         <span class="caret">&gt;</span>
         <input id="promptInput" type="text" aria-label="Describe what you want to build" placeholder="">
@@ -223,6 +242,7 @@ footer a:hover{color:var(--ink)}
       <div class="tick on"><span class="dot">✓</span><b>Lint</b><small>0.4s</small></div>
       <div class="tick on"><span class="dot">✓</span><b>Compile</b><small>3.1s</small></div>
       <div class="tick on"><span class="dot">✓</span><b>Consistency</b><small>0.0s</small></div>
+      <div class="tick on"><span class="dot">✓</span><b>Electrical</b><small>0.0s</small></div>
       <div class="tick budget on"><span class="dot">✓</span><b>Simulate</b><small>2.0s</small></div>
     </div>
   </div>
@@ -232,7 +252,7 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <h2>Nothing reaches you unverified.</h2>
-      <p>Every design climbs a ladder of checks, cheapest first. Four of them cost nothing. Only a design that passes all four is worth a second of simulation time, and only a design that passes simulation is shown to you.</p>
+      <p>Every design climbs a ladder of checks, cheapest first. Five of them cost nothing. Only a design that passes all five is worth a second of simulation time, and only a design that passes simulation is shown to you.</p>
     </div>
     <div class="verify-grid">
       <div>
@@ -241,7 +261,8 @@ footer a:hover{color:var(--ink)}
           <div class="rung" data-stage="lint"><span class="idx">2</span><div><h3>Lint</h3><p>Every pin name exists on every part. Wokwi's own checker.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="compile"><span class="idx">3</span><div><h3>Compile</h3><p>Builds for ESP32 with arduino-cli. Three seconds warm.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="consistency"><span class="idx">4</span><div><h3>Consistency</h3><p>The code's pin numbers match the wires. Lint doesn't check this.</p></div><span class="cost free">free</span></div>
-          <div class="rung" data-stage="simulate"><span class="idx">5</span><div><h3>Simulate</h3><p>Runs the firmware in Wokwi and waits for the expected output.</p></div><span class="cost budget">budget</span></div>
+          <div class="rung" data-stage="electrical"><span class="idx">5</span><div><h3>Electrical</h3><p>Rails never shorted, every LED through a resistor, servo on 5 V, nothing driven on input-only pins, rough current under the USB limit.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="simulate"><span class="idx">6</span><div><h3>Simulate</h3><p>Runs the firmware in Wokwi, presses the buttons, and checks the pins and the serial output.</p></div><span class="cost budget">budget</span></div>
         </div>
         <p class="ladder-note">Fail anywhere and the error, plus the previous attempt, goes back to the model. Three attempts, then it stops and tells you why.</p>
       </div>
@@ -249,6 +270,20 @@ footer a:hover{color:var(--ink)}
         <div class="term-bar"><i></i><i></i><i></i><span>circuitmind</span></div>
         <div class="term-body" id="term"></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>How it works, in three pictures.</h2>
+      <p>The same diagrams as the project README. Click one to open it full size.</p>
+    </div>
+    <div class="pics">
+      <a class="pic" href="img/hld.png" target="_blank" rel="noopener"><img src="img/hld.png" alt="High-level design: the web page talks to the engine, the engine talks to the model and the simulator" loading="lazy"><span><b>1. The map.</b> A page, an engine, a model, a simulator. The engine is the only thing that talks to the model and to Wokwi.</span></a>
+      <a class="pic" href="img/lld.png" target="_blank" rel="noopener"><img src="img/lld.png" alt="Low-level design: the modules of the engine and how a design flows through them" loading="lazy"><span><b>2. The code.</b> The model fills in a small design. The engine expands it, checks it rung by rung, and writes every attempt to disk.</span></a>
+      <a class="pic" href="img/simulation-flow.png" target="_blank" rel="noopener"><img src="img/simulation-flow.png" alt="Simulation flow: compile, upload to Wokwi, run the scenario, read the exit code" loading="lazy"><span><b>3. One design, one run.</b> Compiled, uploaded, driven by a scenario script. The verdict is the simulator's exit code, never a guess from the log.</span></a>
     </div>
   </div>
 </section>
@@ -300,8 +335,8 @@ Breadboard + jumpers  ×1
 <section>
   <div class="wrap">
     <div class="nums">
-      <div class="num"><b>29</b><span>parts in the catalogue, pin names pulled from the simulator's own checker</span></div>
-      <div class="num"><b>4</b><span>free checks before a single simulation second is spent</span></div>
+      <div class="num"><b>25</b><span>benchmark tasks, each with a reference design that passes every check</span></div>
+      <div class="num"><b>5</b><span>free checks before a single simulation second is spent</span></div>
       <div class="num"><b>3</b><span>attempts max, then it stops and explains what went wrong</span></div>
       <div class="num"><b>0</b><span>unverified designs ever shown to a user</span></div>
     </div>
@@ -312,13 +347,13 @@ Breadboard + jumpers  ×1
   <div class="wrap">
     <div class="phys">
       <div>
-        <span class="tag">In progress</span>
-        <h2>Mechanical builds get a second simulator.</h2>
-        <p style="color:var(--ink2);margin:0">An arm can pass every electrical check and still not reach the cup. For servos, arms and grippers, the motor signals from the first simulation drive a physics model, and three more things get checked:</p>
+        <span class="tag">Not this semester</span>
+        <h2>Mechanical builds would need a second simulator.</h2>
+        <p style="color:var(--ink2);margin:0">An arm can pass every electrical check and still not reach the cup. Checking that needs a physics simulator (the route is PX4 and Gazebo), and that is a separate project. Today the tool does the honest thing instead:</p>
         <ul>
-          <li>Does the arm actually reach where it was told to go?</li>
-          <li>Do the servos have the torque to get there under load?</li>
-          <li>Can the power supply handle every motor moving at once?</li>
+          <li>Asks for an arm or a drone? It says so plainly and offers the part it can prove: one servo, or a tilt sensor that lights an LED.</li>
+          <li>Verified means: compiled for a real ESP32, run in Wokwi, inputs applied by a script, pins and serial output checked.</li>
+          <li>Not checked: current and heat (no analog simulation yet), torque, and anything the prompt implied but did not say.</li>
         </ul>
       </div>
       <div class="arm" aria-hidden="true">
@@ -346,10 +381,11 @@ Breadboard + jumpers  ×1
   <div class="wrap">
     <div>
       <h2>Build something that works the first time you plug it in.</h2>
-      <p>Free while it's in development. Bring an idea, leave with a wiring guide.</p>
+      <p>Free to use. Sign in, get a few runs a day, and every design you build is saved to your account.</p>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <a class="btn primary lg" href="app.html">Get started</a>
+      <a class="btn primary lg" href="app.html">Open workspace</a>
+      <button class="btn lg" type="button" data-signin>Sign in</button>
       <a class="btn lg" href="https://github.com/Piyush-Thakkarr/circuitmind" target="_blank" rel="noopener">View the source</a>
     </div>
   </div>
@@ -363,23 +399,11 @@ Breadboard + jumpers  ×1
   </div>
 </footer>
 
-<div class="modal" id="login" hidden role="dialog" aria-modal="true" aria-labelledby="loginTitle">
-  <div class="box">
-    <button class="x" data-close-login aria-label="Close">×</button>
-    <h3 id="loginTitle">Welcome back</h3>
-    <p class="sub">Sign in to open your workspace and past builds.</p>
-    <form id="loginForm">
-      <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="field"><label for="password">Password</label><input id="password" type="password" placeholder="••••••••" autocomplete="current-password"></div>
-      <button class="btn primary" type="submit">Sign in</button>
-    </form>
-    <div class="or">or</div>
-    <button class="btn ghost" type="button"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="#EA4335" d="M8 6.5v3h4.2c-.2 1-1.3 3-4.2 3a4.5 4.5 0 1 1 0-9c1.3 0 2.1.5 2.6 1l1.8-1.8A7 7 0 0 0 8 1a7 7 0 1 0 0 14c4 0 6.7-2.8 6.7-6.8 0-.5 0-.8-.1-1.2H8z"/></svg>Continue with Google</button>
-    <p class="foot">New here? <a href="#" data-signup>Create an account</a></p>
-  </div>
-</div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="cm.js"></script>
 <script>
 (function(){
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -531,9 +555,10 @@ Breadboard + jumpers  ×1
       {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
       {t: 'compile       PASS   3.1s   Sketch uses 271632 bytes (20%)', c: 'ok', s: 'compile', d: 900},
       {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
-      {t: 'simulate      PASS   2.0s   wait-serial "BLINK" matched', c: 'ok', s: 'simulate', d: 1400},
+      {t: 'electrical    PASS   0.0s   about 100 mA from USB, rails and resistors look right', c: 'ok', s: 'electrical'},
+      {t: 'simulate      PASS   2.0s   wait-serial "BLINK" matched, expect-pin D2 high', c: 'ok', s: 'simulate', d: 1400},
       {t: '', c: ''},
-      {t: 'outcome: VERIFIED  (attempt 1 of 3, catalogue 85454b7f)', c: 'ok'}
+      {t: 'outcome: VERIFIED  (attempt 1 of 3, catalogue 2c493f57)', c: 'ok'}
     ]},
     {cmd: 'circuitmind generate "servo arm that sweeps when the button is pressed"', lines: [
       {t: 'attempt 1 of 3', c: 'dim'},
@@ -551,9 +576,10 @@ Breadboard + jumpers  ×1
       {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
       {t: 'compile       PASS   3.0s   Sketch uses 284104 bytes (21%)', c: 'ok', s: 'compile', d: 900},
       {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
+      {t: 'electrical    PASS   0.0s   about 330 mA from USB, servo V+ on VIN', c: 'ok', s: 'electrical'},
       {t: 'simulate      PASS   3.2s   set-control btn1.pressed=1, wait-serial "SWEEP" matched', c: 'ok', s: 'simulate', d: 1500},
       {t: '', c: ''},
-      {t: 'outcome: VERIFIED  (attempt 2 of 3, catalogue 85454b7f)', c: 'ok'}
+      {t: 'outcome: VERIFIED  (attempt 2 of 3, catalogue 2c493f57)', c: 'ok'}
     ]}
   ];
   function setStage(stage, cls){
@@ -598,18 +624,20 @@ Breadboard + jumpers  ×1
     }
   }
 
-  /* ---------- login modal ---------- */
-  var modal = document.getElementById('login');
-  function openLogin(){ if (!modal) return; modal.hidden = false; var f = modal.querySelector('input'); if (f) setTimeout(function(){ f.focus(); }, 30); }
-  function closeLogin(){ if (modal) modal.hidden = true; }
-  document.querySelectorAll('[data-open-login]').forEach(function(b){ b.addEventListener('click', openLogin); });
-  document.querySelectorAll('[data-close-login]').forEach(function(b){ b.addEventListener('click', closeLogin); });
-  if (modal) {
-    modal.addEventListener('click', function(e){ if (e.target === modal) closeLogin(); });
-    var lf = document.getElementById('loginForm'); if (lf) lf.addEventListener('submit', function(e){ e.preventDefault(); closeLogin(); });
-    var su = modal.querySelector('[data-signup]'); if (su) su.addEventListener('click', function(e){ e.preventDefault(); });
+  /* ---------- sign-in (shared with the workspace, see cm.js) ---------- */
+  function renderNav(){
+    var nav = document.getElementById('navAuth'); if (!nav) return;
+    var u = window.CM && CM.auth.ready() ? CM.auth.user() : null;
+    if (u) nav.innerHTML = '<a class="btn" href="designs.html">My designs</a><a class="btn primary" href="app.html">Open workspace</a>';
+    else nav.innerHTML = '<button class="btn" type="button" data-signin>Sign in</button><a class="btn primary" href="app.html">Open workspace</a>';
+    nav.querySelectorAll('[data-signin]').forEach(function(b){ b.addEventListener('click', CM.auth.open); });
   }
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeLogin(); });
+  if (window.CM && CM.auth.ready()) {
+    document.querySelectorAll('[data-signin]').forEach(function(b){ b.addEventListener('click', CM.auth.open); });
+    CM.auth.onChange(renderNav);
+    CM.auth.init();
+  }
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && window.CM) CM.auth.close(); });
 })();
 </script>
 </body>
