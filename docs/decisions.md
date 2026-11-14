@@ -247,3 +247,14 @@ Seven `expect-pin` checks per digit need known pins. Common cathode means a high
 segment, which matches how the other tasks drive LEDs; the Wokwi default is common anode, so
 the catalogue description now names the `common` attribute. The catalogue hash changed with
 the description (2c493f57610f32e2).
+
+**The engine runs on the owner's laptop behind a Cloudflare quick tunnel, not on a Hugging Face Space.**
+Creating a Docker Space on the free account returned HTTP 402 on 14 Nov 2026. The huggingface_hub
+Spaces guide says Gradio and Docker Spaces on the free cpu-basic hardware need a PRO subscription
+(static Spaces stay free, but a static Space cannot run arduino-cli). Every other host that can run
+the toolchain wants a card on file, and the project spends nothing. So `circuitmind serve --tunnel`
+starts `cloudflared tunnel --url` (no account needed), reads the trycloudflare address from its
+banner, and prints a link to the web app with `?engine=<address>`; the page stores the address and
+uses it. The address changes every start, which is why the link, not a fixed URL, is what gets
+shared. The Dockerfile stays in the repo, written for a generic host (user 1000, $PORT), so moving
+to a paid or card-backed host later is a config change, not a rewrite.

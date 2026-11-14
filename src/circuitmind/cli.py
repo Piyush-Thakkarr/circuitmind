@@ -231,8 +231,31 @@ def bench(
 
 
 @app.command()
-def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+def serve(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    tunnel: bool = typer.Option(False, help="Also open a public https address with cloudflared and print a link to share."),
+) -> None:
     """Start the HTTP API for the web app."""
     import uvicorn
 
-    uvicorn.run("circuitmind.api:app", host=host, port=port, log_level="info")
+    from .tunnel import QuickTunnel, share_link
+
+    qt = None
+    if tunnel:
+        qt = QuickTunnel(port)
+        try:
+            url = qt.start()
+        except RuntimeError as e:
+            typer.echo(str(e), err=True)
+            raise typer.Exit(1)
+        typer.echo("")
+        typer.echo(f"engine address: {url}")
+        typer.echo(f"share this link: {share_link(url)}")
+        typer.echo("the address changes every time this command starts; keep this window open")
+        typer.echo("")
+    try:
+        uvicorn.run("circuitmind.api:app", host=host, port=port, log_level="info")
+    finally:
+        if qt:
+            qt.stop()
