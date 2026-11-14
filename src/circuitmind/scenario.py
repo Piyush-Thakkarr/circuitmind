@@ -82,6 +82,7 @@ def build_scenario(design: Design, prompt: str, *, name: str = "web") -> Scenari
 # onto a model design that chose different ids.
 CONTROL_TYPES: dict[str, tuple[str, ...]] = {
     "pressed": ("wokwi-pushbutton", "wokwi-analog-joystick"),
+    "value": ("wokwi-slide-switch",),
     "x": ("wokwi-analog-joystick",),
     "y": ("wokwi-analog-joystick",),
     "position": ("wokwi-potentiometer",),

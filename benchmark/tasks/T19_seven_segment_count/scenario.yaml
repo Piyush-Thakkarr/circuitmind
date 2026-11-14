@@ -1,0 +1,62 @@
+name: T19_seven_segment_count
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "DIGIT=3"
+  - expect-pin:
+      part-id: esp
+      name: D13
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D12
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D14
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D27
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D25
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D33
+      value: 1
+  - wait-serial: "DIGIT=4"
+  - expect-pin:
+      part-id: esp
+      name: D13
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D12
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D14
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D27
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 0
+  - expect-pin:
+      part-id: esp
+      name: D25
+      value: 1
+  - expect-pin:
+      part-id: esp
+      name: D33
+      value: 1

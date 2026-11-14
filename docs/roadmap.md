@@ -25,9 +25,9 @@ These are known holes in what exists. Nothing new gets built until they are clos
 - [x] **Out-of-scope prompts.** A request that needs parts outside the catalogue (drone, mains power, walking robot) gets a clear answer before any model call where possible (keyword screen) and a model-side rule: if the request cannot be built from the catalogue, return the closest buildable sub-project and say what was left out. Test with five out-of-scope prompts.
 
 ## 1. Finish the task suite (25)
-- [ ] T16 to T20: slide switch, LDR, PIR, 7-segment, relay. All five rungs must pass. If a part has no scenario control, pick another part; never ship a task the simulator cannot check.
+- [x] T16 to T20: slide switch, LDR, PIR, 7-segment, relay. All five rungs must pass. If a part has no scenario control, pick another part; never ship a task the simulator cannot check. Done 14 Nov 2026; the PIR has no working control and became a DS18B20 heater task (T18). The slide switch does have one (`value`), found by probing.
 - [x] T21 to T25: two sensors, sensor + LCD, joystick + servo, MPU6050 tilt alarm, stepper. Keypad and rotary encoder dropped: no scenario control exists for them.
-- [ ] Every scenario in the suite uses `expect-pin` or `expect-text` where applicable (from section 0).
+- [x] Every scenario in the suite uses `expect-pin` or `expect-text` where applicable (from section 0). The 13 status-only scenarios are the sensor readings, PWM, servo, stepper and LCD tasks listed in decisions.md; each task's notes say why.
 
 ## 2. Website works for anyone (free stack)
 The frontend is already deployed on Vercel. The gap is the engine, which runs only on the owner's laptop.

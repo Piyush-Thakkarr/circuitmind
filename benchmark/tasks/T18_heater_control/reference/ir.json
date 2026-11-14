@@ -1,0 +1,68 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "temp1",
+      "type": "wokwi-ds18b20",
+      "attrs": {}
+    },
+    {
+      "id": "r_pullup",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "4700"
+      }
+    },
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "temp1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "temp1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "temp1:DQ",
+      "esp:D15"
+    ],
+    [
+      "r_pullup:1",
+      "esp:D15"
+    ],
+    [
+      "r_pullup:2",
+      "esp:3V3"
+    ],
+    [
+      "esp:D2",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led1:A"
+    ],
+    [
+      "led1:C",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "#include <OneWire.h>\n#include <DallasTemperature.h>\n\nconst int ONE_WIRE_PIN = 15;\nconst int LED_PIN = 2;\nconst float READY_AT_C = 30.0;\nOneWire oneWire(ONE_WIRE_PIN);\nDallasTemperature sensors(&oneWire);\nint last = -1;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED_PIN, OUTPUT);\n  digitalWrite(LED_PIN, LOW);\n  sensors.begin();\n}\n\nvoid loop() {\n  sensors.requestTemperatures();\n  float c = sensors.getTempCByIndex(0);\n  if (c == DEVICE_DISCONNECTED_C) {\n    delay(500);\n    return;\n  }\n  int heating = c < READY_AT_C ? 1 : 0;\n  if (heating != last) {\n    digitalWrite(LED_PIN, heating ? HIGH : LOW);\n    Serial.println(heating ? \"HEATING\" : \"READY\");\n    last = heating;\n  }\n  delay(500);\n}\n",
+  "status_line": "HEATING",
+  "explanation": "DS18B20 data on GPIO 15 with a 4.7k pull-up to 3V3, read with OneWire and DallasTemperature. Below 30 C the heater LED on GPIO 2 is on and HEATING prints; at 30 or above it is off and READY prints. A disconnected sensor (-127) is skipped."
+}

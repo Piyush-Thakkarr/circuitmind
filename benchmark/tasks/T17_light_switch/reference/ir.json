@@ -1,0 +1,53 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "ldr1",
+      "type": "wokwi-photoresistor-sensor",
+      "attrs": {}
+    },
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "yellow"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "ldr1:VCC",
+      "esp:3V3"
+    ],
+    [
+      "ldr1:GND",
+      "esp:GND.1"
+    ],
+    [
+      "ldr1:AO",
+      "esp:D34"
+    ],
+    [
+      "esp:D2",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led1:A"
+    ],
+    [
+      "led1:C",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "const int LDR_PIN = 34;\nconst int LED_PIN = 2;\nconst int DARK_ABOVE = 2000;\nint last = -1;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(LED_PIN, OUTPUT);\n  digitalWrite(LED_PIN, LOW);\n}\n\nvoid loop() {\n  int reading = analogRead(LDR_PIN);\n  int dark = reading > DARK_ABOVE ? 1 : 0;\n  if (dark != last) {\n    digitalWrite(LED_PIN, dark ? HIGH : LOW);\n    Serial.println(dark ? \"DARK\" : \"LIGHT\");\n    last = dark;\n  }\n  delay(200);\n}\n",
+  "status_line": "LIGHT",
+  "explanation": "LDR module AO on GPIO 34 (input-only, ADC1), powered from 3V3 so the reading stays in range. Above 2000 of 4095 is dark. LED on GPIO 2 through 220 ohms."
+}

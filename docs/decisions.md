@@ -229,3 +229,21 @@ tried, never presented as working.
 correct figures from its abstract are task-specific (ESP-IDF) and should be quoted
 exactly or not at all. Rule since then: no number goes into a doc without a source
 next to it.
+
+**The Wokwi PIR cannot be driven from a scenario; T18 is a DS18B20 task instead.**
+A `set-control motion` step on `wokwi-pir-motion-sensor` is accepted and changes nothing: the
+probe sketch printed QUIET until the timeout (14 Nov 2026). The part docs only offer a
+"Simulate Motion" button in the browser. The DS18B20 has a documented `temperature` control
+(-55 to 125 C), so T18 is a heater controller on that sensor. OneWire and DallasTemperature
+joined the toolchain and the Dockerfile.
+
+**The slide switch has a working `value` control even though its docs list none.**
+`set-control value 1` on `wokwi-slide-switch` moves the handle to the pin-3 side; the probe
+sketch read the common pin go low at that moment. T16 uses it. The prompt fixes which switch
+pin goes to ground, because the scenario only knows about one direction of movement.
+
+**T19 fixes the GPIO of every segment and uses a common-cathode display.**
+Seven `expect-pin` checks per digit need known pins. Common cathode means a high GPIO lights a
+segment, which matches how the other tasks drive LEDs; the Wokwi default is common anode, so
+the catalogue description now names the `common` attribute. The catalogue hash changed with
+the description (2c493f57610f32e2).
