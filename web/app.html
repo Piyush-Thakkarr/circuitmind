@@ -157,7 +157,7 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
 <div class="modal" id="urlModal" hidden role="dialog" aria-modal="true" aria-labelledby="urlTitle">
   <div class="box">
     <h3 id="urlTitle">Engine URL</h3>
-    <p>The engine is the local server running <code>circuitmind serve</code>. Default is your own machine. For a tunnel, paste its https address.</p>
+    <p>The engine is the server running <code>circuitmind serve</code>. Default is your own machine. If someone runs it for you with <code>--tunnel</code>, paste the https address they give you, or open the link they share (it sets this for you).</p>
     <input id="urlInput" type="url" value="">
     <div class="row"><button class="btn" type="button" id="urlCancel">Cancel</button><button class="btn primary" type="button" id="urlSave">Save</button></div>
   </div>
@@ -171,22 +171,35 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
   try { api = localStorage.getItem('cm_api') || api; } catch(e){}
   var q = new URLSearchParams(location.search);
   if (q.get('prompt')) $('prompt').value = q.get('prompt');
+  /* a shared link carries the engine address: app.html?engine=https://... (circuitmind serve --tunnel prints it) */
+  if (q.get('engine') && /^https?:\/\//.test(q.get('engine'))) {
+    api = q.get('engine').replace(/\/+$/,'');
+    try { localStorage.setItem('cm_api', api); } catch(e){}
+  }
 
   function toast(msg){ var t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2200); }
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
-  /* engine connection */
-  function checkConn(){
-    var el=$('conn'); el.className='conn'; $('connText').textContent='checking engine';
+  /* engine connection: keep retrying for a while, the engine may still be starting */
+  var connTimer=null, connTries=0, engineOnline=false;
+  var CONN_RETRY_MS=5000, CONN_MAX_TRIES=24; /* two minutes */
+  function checkConn(reset){
+    if (reset){ connTries=0; if (connTimer){ clearTimeout(connTimer); connTimer=null; } }
+    var el=$('conn'); el.className='conn'; $('connText').textContent=connTries ? 'engine not answering, retrying ('+connTries+')' : 'checking engine';
     fetch(api+'/health',{cache:'no-store'}).then(function(r){return r.json();}).then(function(h){
+      engineOnline=true; connTries=0;
       el.className='conn ok';
       $('connText').textContent='engine online' + (h.wokwi ? '' : ', no simulator token');
-    }).catch(function(){ el.className='conn bad'; $('connText').textContent='engine offline'; });
+    }).catch(function(){
+      engineOnline=false; connTries++;
+      if (connTries<=CONN_MAX_TRIES){ el.className='conn'; $('connText').textContent='engine not answering, retrying ('+connTries+')'; connTimer=setTimeout(function(){ checkConn(false); }, CONN_RETRY_MS); }
+      else { el.className='conn bad'; $('connText').textContent='engine offline'; }
+    });
   }
-  checkConn();
+  checkConn(true);
   $('connBtn').addEventListener('click', function(){ $('urlInput').value=api; $('urlModal').hidden=false; $('urlInput').focus(); });
   $('urlCancel').addEventListener('click', function(){ $('urlModal').hidden=true; });
-  $('urlSave').addEventListener('click', function(){ api=$('urlInput').value.replace(/\/+$/,''); try{ localStorage.setItem('cm_api',api);}catch(e){} $('urlModal').hidden=true; checkConn(); });
+  $('urlSave').addEventListener('click', function(){ api=$('urlInput').value.replace(/\/+$/,''); try{ localStorage.setItem('cm_api',api);}catch(e){} $('urlModal').hidden=true; checkConn(true); });
   $('urlModal').addEventListener('click', function(e){ if(e.target===$('urlModal')) $('urlModal').hidden=true; });
 
   $('chips').addEventListener('click', function(e){ if(e.target.classList.contains('chip')){ $('prompt').value=e.target.textContent; $('prompt').focus(); } });
@@ -275,7 +288,7 @@ pre.code{margin:0;background:#070B10;border:1px solid var(--line);border-radius:
       }
       stream(j.job_id);
     })
-    .catch(function(err){ $('go').disabled=false; $('attempts_view').innerHTML='<div class="empty">Could not reach the engine: '+esc(err.message)+'. Start it with <code>circuitmind serve</code>.</div>'; });
+    .catch(function(err){ $('go').disabled=false; checkConn(true); $('attempts_view').innerHTML='<div class="empty">Could not reach the engine ('+esc(err.message)+'). The engine is the server that compiles and simulates. If this is your own machine, start it with <code>circuitmind serve</code>. If someone shared this page with you, the engine on their side is not running right now; ask them to start it and open the link they give you.</div>'; });
   });
 
   function stream(jobId){
