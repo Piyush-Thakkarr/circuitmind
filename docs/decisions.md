@@ -288,3 +288,14 @@ The parts of an attempt measured on 14 Nov 2026: cold compile 31 to 46 s and sim
 across the five new reference runs, warm compile about 3 s (CLAUDE.md toolchain notes), Groq reply
 5 to 10 s (docs/background.md). A progress bar would have to guess which case it is in; a counter
 next to the stated range is honest and still tells the user whether something is stuck.
+
+**The board's type and id are normalised before the schema rung; rate-limit waits follow the service's own hint.**
+In a web run on 14 Nov 2026 gpt-oss-120b wrote `"board": "esp"` on the first try and
+`"wokwi-esp32-devkit-v1:D2"` in the connections on the second, and both died at the schema rung
+for nothing electrical. `to_design_dict` now maps both to what they mean when the board type is
+known, and the prompt says which field is the type and which the id. The third attempt then hit
+Groq's free-tier limit of 8000 tokens a minute (a grounded prompt is about 3700 tokens, a retry
+prompt about 5000) and the old back-off of 3 and 5 s was not enough, so the user saw a raw HTTP
+429 as an "engine error". Providers now retry a 429 up to five times, waiting what the body
+("try again in 3.59s") or the Retry-After header says plus one second, capped at 45 s, and an
+error that still gets through is turned into one plain sentence by `plain_engine_error`.

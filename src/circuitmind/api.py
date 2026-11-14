@@ -33,7 +33,7 @@ from pydantic import BaseModel, Field
 
 from . import auth
 from . import catalogue as cat_mod
-from .failure import explain_failure
+from .failure import explain_failure, plain_engine_error
 from .guide import build_guide
 from .loop import run_generation
 from .providers import get_provider
@@ -164,7 +164,7 @@ def _run(job_id: str, req: GenerateRequest, user: auth.User | None, design_id: s
                 result["design_id"] = design_id
         except Exception as e:  # noqa: BLE001
             job["status"] = "error"
-            job["error"] = str(e)[:500]
+            job["error"] = plain_engine_error(e)
             if user and design_id:
                 auth.update_design(user, design_id, {"status": "error"})
         finally:
