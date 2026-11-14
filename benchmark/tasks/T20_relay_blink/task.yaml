@@ -1,0 +1,17 @@
+id: T20_relay_blink
+category: actuators
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a relay module to the ESP32 (IN on GPIO 26, VCC to VIN, GND to ground)
+  and use its contacts to switch a red LED: COM to 3V3, NO (normally open)
+  through a 220 ohm resistor to the LED anode, LED cathode to ground. Every
+  second toggle the relay: drive GPIO 26 high to energise it and print RELAY=ON
+  to the serial monitor at 115200 baud, then drive it low and print RELAY=OFF.
+status_line: RELAY=
+timeout_ms: 5000
+notes: >
+  The relay is the catalogue's way of switching a separate load; the LED stands
+  in for a lamp (mains loads are refused). The ESP32 only drives IN; the LED is on
+  the contact side with its own resistor. The scenario waits for RELAY=ON and
+  checks GPIO 26 high, then RELAY=OFF and GPIO 26 low. The relay module in Wokwi
+  is active-high with the default npn transistor attribute.

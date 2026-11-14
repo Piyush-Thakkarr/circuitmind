@@ -1,7 +1,7 @@
 {
   "extracted_at": "2026-09-14T16:06:22+00:00",
   "source": "wokwi-cli lint",
-  "hash": "85454b7fb8120f48",
+  "hash": "2c493f57610f32e2",
   "parts": {
     "wokwi-esp32-devkit-v1": {
       "pins": [
@@ -243,7 +243,7 @@
         "COM.2",
         "CLN"
       ],
-      "description": "Seven-segment display. attrs.digits sets number of digits."
+      "description": "Seven-segment display. attrs.common: \"anode\" (default, segments light when low) or \"cathode\" (segments light when high). attrs.digits sets number of digits. Each segment needs a resistor."
     },
     "wokwi-neopixel": {
       "pins": [

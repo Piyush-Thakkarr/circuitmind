@@ -1,0 +1,20 @@
+id: T18_heater_control
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a DS18B20 temperature sensor (data pin on GPIO 15, with a 4.7k pull-up
+  resistor to 3V3) and a red LED (with a series resistor, on GPIO 2) to the ESP32.
+  The LED stands for a water heater. Every 500 ms read the temperature. Below 30
+  degrees C turn the LED on and print HEATING to the serial monitor at 115200
+  baud; at 30 degrees or above turn it off and print READY. Print once after the
+  first reading and then only when the state changes.
+status_line: HEATING
+timeout_ms: 8000
+notes: >
+  Replaces the planned PIR task: a set-control motion step on the Wokwi PIR is
+  accepted and does nothing (probed 14 Nov 2026, the sketch printed QUIET until
+  the timeout), so a PIR task could only prove the sketch boots. The DS18B20 has a
+  documented temperature control (-55 to 125). One-wire bus with OneWire and
+  DallasTemperature. The simulator starts at 22 C, so HEATING comes first with
+  GPIO 2 high; the scenario sets 45 C and expects READY with GPIO 2 low. Inverse
+  logic to the alarm tasks: hot means off.

@@ -40,7 +40,7 @@ CANDIDATES: dict[str, str] = {
     "wokwi-lcd1602": "16x2 character LCD. Use SCL/SDA for the I2C backpack (LiquidCrystal_I2C, address 0x27).",
     "wokwi-lcd2004": "20x4 character LCD. Use SCL/SDA for the I2C backpack (address 0x27).",
     "board-ssd1306": "128x64 OLED over I2C (Adafruit_SSD1306, address 0x3C).",
-    "wokwi-7segment": "Seven-segment display. attrs.digits sets number of digits.",
+    "wokwi-7segment": "Seven-segment display. attrs.common: \"anode\" (default, segments light when low) or \"cathode\" (segments light when high). attrs.digits sets number of digits. Each segment needs a resistor.",
     "wokwi-neopixel": "Single WS2812 NeoPixel. DIN from GPIO, DOUT to the next pixel.",
     "wokwi-membrane-keypad": "4x4 membrane keypad. Rows R1-R4, columns C1-C4. Use the Keypad library.",
     "wokwi-ky-040": "KY-040 rotary encoder. CLK, DT for rotation, SW for the push.",

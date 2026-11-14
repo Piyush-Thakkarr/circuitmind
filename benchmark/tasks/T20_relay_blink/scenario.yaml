@@ -1,0 +1,14 @@
+name: T20_relay_blink
+version: 1
+author: circuitmind
+steps:
+  - wait-serial: "RELAY=ON"
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 1
+  - wait-serial: "RELAY=OFF"
+  - expect-pin:
+      part-id: esp
+      name: D26
+      value: 0

@@ -1,0 +1,18 @@
+id: T17_light_switch
+category: sensors
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect an LDR light sensor module (analog output AO on GPIO 34, powered from
+  3V3) and a yellow LED (with a series resistor, on GPIO 2) to the ESP32. Every
+  200 ms read the analog value; a higher reading means less light. When the
+  reading is above 2000, treat it as dark: turn the LED on and print DARK to the
+  serial monitor at 115200 baud. Otherwise turn the LED off and print LIGHT.
+  Print once at startup and then only when the state changes.
+status_line: LIGHT
+timeout_ms: 6000
+notes: >
+  Analog sensor with a threshold. The module's AO sits between the LDR and a 10k
+  resistor and rises in the dark (Wokwi part docs). At the default 500 lux the
+  reading is around 1000 of 4095; the scenario then sets lux to 10, which pushes
+  it above 3000. The scenario expects LIGHT with GPIO 2 low, then DARK with GPIO
+  2 high. The threshold is in the prompt so model designs agree with the scenario.

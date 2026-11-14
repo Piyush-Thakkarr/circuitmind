@@ -1,0 +1,19 @@
+id: T16_slide_switch
+category: inputs
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a slide switch and a green LED (with a series resistor, on GPIO 2) to
+  the ESP32. Wire the switch's common pin (pin 2) to GPIO 15 using the internal
+  pull-up, pin 3 to ground, and leave pin 1 unconnected. The switch starts in the
+  position that connects pin 2 to pin 1. When GPIO 15 reads low the switch is ON:
+  turn the LED on and print MODE=ON to the serial monitor at 115200 baud. When it
+  reads high, turn the LED off and print MODE=OFF. Print once at startup and then
+  only when the position changes.
+status_line: MODE=
+timeout_ms: 5000
+notes: >
+  A switch that stays put, unlike a pushbutton. The prompt fixes which switch pin
+  goes where because the scenario moves the handle to the pin-3 side (set-control
+  value 1) and must know what that means. The scenario expects MODE=OFF with GPIO
+  2 low at startup, then MODE=ON with GPIO 2 high after the move. A design that
+  prints only on change (not every loop) is what the prompt asks for.

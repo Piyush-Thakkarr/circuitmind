@@ -1,0 +1,126 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "seg1",
+      "type": "wokwi-7segment",
+      "attrs": {
+        "common": "cathode"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r2",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r3",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r4",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r5",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r6",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "id": "r7",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "seg1:COM",
+      "esp:GND.1"
+    ],
+    [
+      "esp:D13",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "seg1:A"
+    ],
+    [
+      "esp:D12",
+      "r2:1"
+    ],
+    [
+      "r2:2",
+      "seg1:B"
+    ],
+    [
+      "esp:D14",
+      "r3:1"
+    ],
+    [
+      "r3:2",
+      "seg1:C"
+    ],
+    [
+      "esp:D27",
+      "r4:1"
+    ],
+    [
+      "r4:2",
+      "seg1:D"
+    ],
+    [
+      "esp:D26",
+      "r5:1"
+    ],
+    [
+      "r5:2",
+      "seg1:E"
+    ],
+    [
+      "esp:D25",
+      "r6:1"
+    ],
+    [
+      "r6:2",
+      "seg1:F"
+    ],
+    [
+      "esp:D33",
+      "r7:1"
+    ],
+    [
+      "r7:2",
+      "seg1:G"
+    ]
+  ],
+  "firmware": "const int SEG_PINS[7] = {13, 12, 14, 27, 26, 25, 33};  // A B C D E F G\nconst byte DIGITS[10] = {\n  0b1111110,  // 0: A B C D E F\n  0b0110000,  // 1: B C\n  0b1101101,  // 2: A B D E G\n  0b1111001,  // 3: A B C D G\n  0b0110011,  // 4: B C F G\n  0b1011011,  // 5: A C D F G\n  0b1011111,  // 6: A C D E F G\n  0b1110000,  // 7: A B C\n  0b1111111,  // 8: all\n  0b1111011,  // 9: A B C D F G\n};\nint digit = 0;\n\nvoid showDigit(int n) {\n  byte pattern = DIGITS[n];\n  for (int i = 0; i < 7; i++) {\n    bool on = pattern & (1 << (6 - i));\n    digitalWrite(SEG_PINS[i], on ? HIGH : LOW);\n  }\n}\n\nvoid setup() {\n  Serial.begin(115200);\n  for (int i = 0; i < 7; i++) {\n    pinMode(SEG_PINS[i], OUTPUT);\n    digitalWrite(SEG_PINS[i], LOW);\n  }\n}\n\nvoid loop() {\n  showDigit(digit);\n  Serial.print(\"DIGIT=\");\n  Serial.println(digit);\n  digit = (digit + 1) % 10;\n  delay(500);\n}\n",
+  "status_line": "DIGIT=",
+  "explanation": "Common-cathode display, COM to ground, segments A to G on GPIO 13, 12, 14, 27, 26, 25, 33 each through 220 ohms. A lookup table holds the segment pattern per digit; the segments are written before the line prints."
+}

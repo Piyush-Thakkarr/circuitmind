@@ -1,0 +1,49 @@
+{
+  "board": "wokwi-esp32-devkit-v1",
+  "parts": [
+    {
+      "id": "sw1",
+      "type": "wokwi-slide-switch",
+      "attrs": {}
+    },
+    {
+      "id": "led1",
+      "type": "wokwi-led",
+      "attrs": {
+        "color": "green"
+      }
+    },
+    {
+      "id": "r1",
+      "type": "wokwi-resistor",
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "sw1:2",
+      "esp:D15"
+    ],
+    [
+      "sw1:3",
+      "esp:GND.1"
+    ],
+    [
+      "esp:D2",
+      "r1:1"
+    ],
+    [
+      "r1:2",
+      "led1:A"
+    ],
+    [
+      "led1:C",
+      "esp:GND.2"
+    ]
+  ],
+  "firmware": "const int SW_PIN = 15;\nconst int LED_PIN = 2;\nint last = -1;\n\nvoid setup() {\n  Serial.begin(115200);\n  pinMode(SW_PIN, INPUT_PULLUP);\n  pinMode(LED_PIN, OUTPUT);\n  digitalWrite(LED_PIN, LOW);\n}\n\nvoid loop() {\n  int on = digitalRead(SW_PIN) == LOW ? 1 : 0;\n  if (on != last) {\n    digitalWrite(LED_PIN, on ? HIGH : LOW);\n    Serial.println(on ? \"MODE=ON\" : \"MODE=OFF\");\n    last = on;\n  }\n  delay(20);\n}\n",
+  "status_line": "MODE=",
+  "explanation": "Switch common on GPIO 15 with the internal pull-up, pin 3 to ground, pin 1 open. Pin 2 on pin 1 reads high (OFF); on pin 3 reads low (ON). LED on GPIO 2 through 220 ohms, a line only when the state changes."
+}

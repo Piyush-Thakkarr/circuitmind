@@ -1,0 +1,18 @@
+id: T19_seven_segment_count
+category: displays
+board: wokwi-esp32-devkit-v1
+prompt: >
+  Connect a single-digit common-cathode 7-segment display to the ESP32: segments
+  A, B, C, D, E, F and G on GPIO 13, 12, 14, 27, 26, 25 and 33, each through a
+  220 ohm resistor, and the common pin to ground. Count from 0 to 9, one digit
+  every 500 ms, then start again. For each digit set the segments first and then
+  print DIGIT=<n> to the serial monitor at 115200 baud.
+status_line: DIGIT=
+timeout_ms: 6000
+notes: >
+  First display whose output the scenario can read pin by pin. The prompt fixes
+  the GPIO for every segment so the scenario can check them: at DIGIT=3 segments
+  A B C D G must be high and E F low; at DIGIT=4 segments B C F G high and A D E
+  low. Common cathode (attrs.common = cathode) so a high GPIO lights a segment;
+  the Wokwi default is common anode. Seven resistors: a 7-segment display is
+  seven LEDs.
