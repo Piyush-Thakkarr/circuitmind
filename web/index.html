@@ -240,10 +240,10 @@ footer a:hover{color:var(--ink)}
     <div class="hero-side" aria-hidden="true">
       <div class="tick on"><span class="dot">✓</span><b>Schema</b><small>0.0s</small></div>
       <div class="tick on"><span class="dot">✓</span><b>Lint</b><small>0.4s</small></div>
-      <div class="tick on"><span class="dot">✓</span><b>Compile</b><small>3.1s</small></div>
+      <div class="tick on"><span class="dot">✓</span><b>Compile</b><small>12.4s</small></div>
       <div class="tick on"><span class="dot">✓</span><b>Consistency</b><small>0.0s</small></div>
       <div class="tick on"><span class="dot">✓</span><b>Electrical</b><small>0.0s</small></div>
-      <div class="tick budget on"><span class="dot">✓</span><b>Simulate</b><small>2.0s</small></div>
+      <div class="tick budget on"><span class="dot">✓</span><b>Simulate</b><small>29.7s</small></div>
     </div>
   </div>
 </section>
@@ -259,7 +259,7 @@ footer a:hover{color:var(--ink)}
         <div class="ladder" id="ladder">
           <div class="rung" data-stage="schema"><span class="idx">1</span><div><h3>Schema</h3><p>Right shape, real parts, no duplicate ids.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="lint"><span class="idx">2</span><div><h3>Lint</h3><p>Every pin name exists on every part. Wokwi's own checker.</p></div><span class="cost free">free</span></div>
-          <div class="rung" data-stage="compile"><span class="idx">3</span><div><h3>Compile</h3><p>Builds for ESP32 with arduino-cli. Three seconds warm.</p></div><span class="cost free">free</span></div>
+          <div class="rung" data-stage="compile"><span class="idx">3</span><div><h3>Compile</h3><p>Builds for ESP32 with arduino-cli. About twelve seconds.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="consistency"><span class="idx">4</span><div><h3>Consistency</h3><p>The code's pin numbers match the wires. Lint doesn't check this.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="electrical"><span class="idx">5</span><div><h3>Electrical</h3><p>Rails never shorted, every LED through a resistor, servo on 5 V, nothing driven on input-only pins, rough current under the USB limit.</p></div><span class="cost free">free</span></div>
           <div class="rung" data-stage="simulate"><span class="idx">6</span><div><h3>Simulate</h3><p>Runs the firmware in Wokwi, presses the buttons, and checks the pins and the serial output.</p></div><span class="cost budget">budget</span></div>
@@ -553,10 +553,10 @@ Breadboard + jumpers  ×1
       {t: 'attempt 1 of 3', c: 'dim'},
       {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
       {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
-      {t: 'compile       PASS   3.1s   Sketch uses 271632 bytes (20%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'compile       PASS  12.4s   Sketch uses 271680 bytes (20%)', c: 'ok', s: 'compile', d: 900},
       {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
       {t: 'electrical    PASS   0.0s   about 100 mA from USB, rails and resistors look right', c: 'ok', s: 'electrical'},
-      {t: 'simulate      PASS   2.0s   wait-serial "BLINK" matched, expect-pin D2 high', c: 'ok', s: 'simulate', d: 1400},
+      {t: 'simulate      PASS  29.7s   wait-serial "BLINK" matched, expect-pin D2 high', c: 'ok', s: 'simulate', d: 1400},
       {t: '', c: ''},
       {t: 'outcome: VERIFIED  (attempt 1 of 3, catalogue 2c493f57)', c: 'ok'}
     ]},
@@ -564,7 +564,7 @@ Breadboard + jumpers  ×1
       {t: 'attempt 1 of 3', c: 'dim'},
       {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
       {t: 'lint          PASS   0.5s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
-      {t: 'compile       PASS   3.4s   Sketch uses 284120 bytes (21%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'compile       PASS  13.1s   Sketch uses 284120 bytes (21%)', c: 'ok', s: 'compile', d: 900},
       {t: 'consistency   FAIL   0.0s', c: 'bad', s: 'consistency', f: true},
       {t: '     firmware uses GPIO [5] but nothing is wired to [\'D5\']', c: 'bad'},
       {t: '     servo1:PWM is wired to esp:D4', c: 'bad'},
@@ -574,7 +574,7 @@ Breadboard + jumpers  ×1
       {t: 'attempt 2 of 3', c: 'dim'},
       {t: 'schema        PASS   0.0s', c: 'ok', s: 'schema'},
       {t: 'lint          PASS   0.4s   0 error(s), 0 warning(s)', c: 'ok', s: 'lint'},
-      {t: 'compile       PASS   3.0s   Sketch uses 284104 bytes (21%)', c: 'ok', s: 'compile', d: 900},
+      {t: 'compile       PASS  12.8s   Sketch uses 284104 bytes (21%)', c: 'ok', s: 'compile', d: 900},
       {t: 'consistency   PASS   0.0s', c: 'ok', s: 'consistency'},
       {t: 'electrical    PASS   0.0s   about 330 mA from USB, servo V+ on VIN', c: 'ok', s: 'electrical'},
       {t: 'simulate      PASS   3.2s   set-control btn1.pressed=1, wait-serial "SWEEP" matched', c: 'ok', s: 'simulate', d: 1500},

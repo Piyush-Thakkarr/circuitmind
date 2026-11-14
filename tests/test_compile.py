@@ -75,3 +75,28 @@ def test_second_failure_is_reported(tmp_path, monkeypatch):
     assert not result.passed
     assert len(calls) == 2
     assert result.extra["retried"] is True
+
+
+def test_fast_esptool_is_used_when_present(monkeypatch, tmp_path):
+    from circuitmind.harness import compile as c
+
+    tool = tmp_path / "esptool"
+    tool.write_text("")
+    monkeypatch.setenv("CIRCUITMIND_ESPTOOL", str(tool))
+    assert c.fast_esptool() == tool
+    cmd = c.compile_command("esp32:esp32:esp32doit-devkit-v1", tmp_path / "s", tmp_path / "b", tool)
+    assert f"tools.esptool_py.path={tmp_path}" in cmd
+    assert "tools.esptool_py.cmd=esptool" in cmd
+    assert cmd[-1] == str(tmp_path / "s")
+
+
+def test_the_cores_own_esptool_is_not_treated_as_fast(monkeypatch):
+    from circuitmind.harness import compile as c
+
+    monkeypatch.delenv("CIRCUITMIND_ESPTOOL", raising=False)
+    monkeypatch.setattr(c.shutil, "which", lambda name: "/Users/x/Library/Arduino15/packages/esp32/tools/esptool_py/5.3.1/esptool")
+    assert c.fast_esptool() is None
+    monkeypatch.setattr(c.shutil, "which", lambda name: None)
+    assert c.fast_esptool() is None
+    cmd = c.compile_command("f", __import__("pathlib").Path("s"), __import__("pathlib").Path("b"), None)
+    assert not any(a.startswith("tools.esptool_py") for a in cmd)
