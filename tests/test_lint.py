@@ -36,3 +36,15 @@ def test_invalid_pin_and_unknown_type_reported(tmp_path):
     rules = {e.split(":")[0] for e in r.extra["errors"]}
     assert {"invalid-pin", "unknown-part-type"} <= rules
     assert any("Valid pins: A, C" in e for e in r.extra["errors"])
+
+
+def test_one_line_sketch_gets_its_entry_points_on_their_own_lines():
+    from circuitmind.harness.ladder import sanitize_firmware
+
+    src = ('#include <Arduino.h>\nvoid setup(){Serial.begin(115200);}void loop(){static int n=0;n++;}')
+    out = sanitize_firmware(src)
+    assert out == "#include <Arduino.h>\nvoid setup(){\nSerial.begin(115200);}\nvoid loop(){\nstatic int n=0;n++;}"
+    # the static strip still works and a tidy sketch is left exactly as it was
+    assert sanitize_firmware("static void setup() {\n}\n") == "void setup() {\n}\n"
+    tidy = "void setup() {\n  Serial.begin(115200);\n}\n\nvoid loop() {\n  delay(1);\n}\n"
+    assert sanitize_firmware(tidy) == tidy
