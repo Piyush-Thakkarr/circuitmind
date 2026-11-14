@@ -82,3 +82,19 @@ def explain_failure(res: RunResult) -> dict:
         "suggestion": _suggestion(res),
         "examples": example_prompts(),
     }
+
+
+def plain_engine_error(exc: BaseException) -> str:
+    """One sentence a user can act on when the run itself broke, with the raw text behind it."""
+    raw = str(exc)[:300]
+    low = raw.lower()
+    if "quota exhausted" in low or "per day" in low:
+        return f"The free model quota for today is used up. Try again tomorrow. ({raw})"
+    if "http 429" in low or "rate limit" in low or "tokens per minute" in low:
+        return ("The free model service is busy (too many requests in one minute). "
+                f"Wait a minute and try again. ({raw})")
+    if "wokwi_cli_token" in low:
+        return f"The simulator token is missing on the engine. ({raw})"
+    if "could not reach" in low or "request failed" in low or "timed out" in low:
+        return f"The engine could not reach a service it needs. Try again in a moment. ({raw})"
+    return f"Something broke inside the engine. ({raw})"

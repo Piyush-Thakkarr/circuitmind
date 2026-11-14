@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -58,8 +59,24 @@ WIRE_SCHEMA: dict[str, Any] = {
 }
 
 
-def to_design_dict(wire: dict[str, Any]) -> dict[str, Any]:
-    """Wire shape -> the dict ``ir.Design.model_validate`` expects."""
+BOARD_ID = "esp"
+
+
+def _board_ref(ref: Any, board: str | None) -> Any:
+    """A connection endpoint with the board's type used as its id ("wokwi-esp32-devkit-v1:D2") -> "esp:D2"."""
+    if board and isinstance(ref, str) and ref.startswith(board + ":"):
+        return BOARD_ID + ref[len(board):]
+    return ref
+
+
+def to_design_dict(wire: dict[str, Any], *, board: str | None = None) -> dict[str, Any]:
+    """Wire shape -> the dict ``ir.Design.model_validate`` expects.
+
+    Models mix up the board's type and its id now and then: "board": "esp", or
+    connections written as "wokwi-esp32-devkit-v1:D2". Both mean the same board,
+    so when the board type is known those two slips are put right here rather
+    than failing the schema rung for nothing electrical.
+    """
     parts = []
     for p in wire.get("parts", []):
         attrs = p.get("attrs") or []
@@ -69,11 +86,15 @@ def to_design_dict(wire: dict[str, Any]) -> dict[str, Any]:
     conns = []
     for c in wire.get("connections", []):
         if isinstance(c, dict):
-            conns.append((c.get("from"), c.get("to")))
+            a, b = c.get("from"), c.get("to")
         else:
-            conns.append(tuple(c))
+            a, b = (tuple(c) + (None, None))[:2]
+        conns.append((_board_ref(a, board), _board_ref(b, board)))
+    wire_board = wire.get("board")
+    if board and (not wire_board or wire_board == BOARD_ID):
+        wire_board = board
     return {
-        "board": wire.get("board"),
+        "board": wire_board,
         "parts": parts,
         "connections": conns,
         "firmware": wire.get("firmware", ""),
@@ -101,6 +122,37 @@ class Provider(Protocol):
     name: str
 
     def generate(self, system: str, user: str) -> ModelReply: ...
+
+
+_RETRY_IN_RE = re.compile(r"try again in\s*([0-9]+(?:\.[0-9]+)?)\s*(ms|s|m)?", re.IGNORECASE)
+_MAX_RETRY_WAIT_S = 45
+_RETRIES_429 = 5
+
+
+def retry_wait_seconds(code: int, text: str, headers: Any, attempt: int) -> float:
+    """How long to wait before retrying a failed request.
+
+    A 429 usually says how long: Groq writes "Please try again in 3.59s" in the
+    body, others send a Retry-After header. That figure plus one second is used,
+    capped so a stuck service does not hold a job for minutes. Anything else
+    backs off 3, 5, 9 s.
+    """
+    wait = float(2 ** attempt + 1)
+    if code == 429:
+        ra = None
+        try:
+            ra = headers.get("Retry-After") if headers is not None else None
+        except AttributeError:
+            ra = None
+        if ra and str(ra).strip().isdigit():
+            wait = float(ra) + 1
+        m = _RETRY_IN_RE.search(text or "")
+        if m:
+            n = float(m.group(1))
+            unit = (m.group(2) or "s").lower()
+            secs = n / 1000 if unit == "ms" else n * 60 if unit == "m" else n
+            wait = secs + 1
+    return min(wait, _MAX_RETRY_WAIT_S)
 
 
 class Pacer:
@@ -151,7 +203,7 @@ class GeminiProvider:
         self.pacer.wait()
         t0 = time.time()
         last_err: Exception | None = None
-        for attempt in range(4):
+        for attempt in range(_RETRIES_429 + 1):
             try:
                 with urllib.request.urlopen(req, timeout=180) as r:
                     data = json.loads(r.read())
@@ -161,8 +213,9 @@ class GeminiProvider:
                 text = e.read().decode(errors="replace")
                 if e.code == 429 and "daily" in text.lower():
                     raise RuntimeError("Gemini daily quota exhausted; try again after the UTC reset") from e
-                if e.code in (429, 500, 503) and attempt < 3:
-                    time.sleep(2 ** attempt + 1)
+                tries = _RETRIES_429 if e.code == 429 else 3
+                if e.code in (429, 500, 503) and attempt < tries:
+                    time.sleep(retry_wait_seconds(e.code, text, e.headers, attempt))
                     continue
                 raise RuntimeError(f"Gemini HTTP {e.code}: {text[:400]}") from e
             except (urllib.error.URLError, TimeoutError, OSError) as e:
@@ -218,7 +271,7 @@ class OpenAICompatProvider:
             method="POST",
         )
         last_err: Exception | None = None
-        for attempt in range(4):
+        for attempt in range(_RETRIES_429 + 1):
             try:
                 with urllib.request.urlopen(req, timeout=180) as r:
                     return json.loads(r.read())
@@ -228,8 +281,9 @@ class OpenAICompatProvider:
                     raise _SchemaUnsupported(text)
                 if e.code == 429 and ("per day" in text.lower() or "daily" in text.lower()):
                     raise RuntimeError(f"{self.name} daily quota exhausted: {text[:200]}") from e
-                if e.code in (429, 500, 502, 503) and attempt < 3:
-                    time.sleep(2 ** attempt + 1)
+                tries = _RETRIES_429 if e.code == 429 else 3
+                if e.code in (429, 500, 502, 503) and attempt < tries:
+                    time.sleep(retry_wait_seconds(e.code, text, e.headers, attempt))
                     continue
                 raise RuntimeError(f"{self.name} HTTP {e.code}: {text[:400]}") from e
             except (urllib.error.URLError, TimeoutError, OSError) as e:

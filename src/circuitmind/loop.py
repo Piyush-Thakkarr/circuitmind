@@ -128,7 +128,7 @@ def run_generation(
 
         design: Design | None = None
         try:
-            design = Design.model_validate(to_design_dict(reply.wire))
+            design = Design.model_validate(to_design_dict(reply.wire, board=board))
         except (ValidationError, TypeError, AttributeError) as e:
             msg = _format_validation_error(e) if isinstance(e, ValidationError) else str(e)
             outcome = _schema_fail(msg)
