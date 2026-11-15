@@ -181,9 +181,21 @@ def bench(
     results: str | None = typer.Option(None, help="Where results JSON goes (default benchmark/results)."),
     label: str = typer.Option("", help="Suffix for the results file, for example run1 -> A_run1.json."),
     yes: bool = typer.Option(False, "--yes", help="Spend the estimated simulation time without asking."),
+    merge: bool = typer.Option(False, "--merge", help="With --only: put these tasks' rows into the existing "
+                               "results file in place of the old ones (repairing tasks that hit an engine error)."),
 ) -> None:
     """Run one benchmark configuration across the task suite. Prints the cost first and asks."""
-    from .bench import CONFIGS, estimate_sim_ms, load_tasks, run_task, summary_table, write_results
+    from .bench import (
+        CONFIGS,
+        TaskResult,
+        estimate_sim_ms,
+        load_tasks,
+        merge_results,
+        results_path,
+        run_task,
+        summary_table,
+        write_results,
+    )
 
     results_dir = Path(results) if results else DEFAULT_RESULTS
 
@@ -192,6 +204,8 @@ def bench(
         raise typer.BadParameter("config must be A, B, C or D")
     if not os.environ.get("WOKWI_CLI_TOKEN"):
         raise typer.BadParameter("bench needs WOKWI_CLI_TOKEN; every config simulates at least once per task")
+    if merge and (not only or not results_path(results_dir, config, label).exists()):
+        raise typer.BadParameter("--merge needs --only and an existing results file for this config and label")
     os.environ["CIRCUITMIND_WAIT_FOR_QUOTA"] = "1"  # a sweep waits out the daily token window; the web app never does
     cat = cat_mod.load()
     prov = get_provider(provider)
@@ -210,13 +224,12 @@ def bench(
         typer.echo("stopped before spending anything")
         raise typer.Exit(0)
     typer.echo("")
-    rows = []
-    for t, tdir in tasks:
+
+    def run_one(t: dict, tdir: Path, wd: Path) -> TaskResult:
         typer.echo(f"{t['id']}", nl=False)
-        wd = RUNS / "bench" / stamp / config / t["id"]
         marks: list[str] = []
 
-        def ev(kind, p, marks=marks):
+        def ev(kind, p):
             if kind == "attempt.done":
                 marks.append("ok" if p["passed"] else p["failed_rung"])
             elif kind == "final_sim":
@@ -225,18 +238,40 @@ def bench(
         try:
             r = run_task(config, t, tdir, prov, cat, wd, on_event=ev)
         except Exception as e:  # noqa: BLE001 - one task must not kill the sweep
-            from .bench import TaskResult
             r = TaskResult(task_id=t["id"], passed=False, attempts=0, failed_rung="error",
                            tokens_in=0, tokens_out=0, sim_ms=0, seconds=0.0)
             marks.append(f"error: {str(e)[:80]}")
-        rows.append(r)
         typer.echo(f"  {'PASS' if r.passed else 'FAIL':4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
                    f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
-    p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, rows, label=label)
+        return r
+
+    rows: dict[str, TaskResult] = {}
+    for t, tdir in tasks:
+        rows[t["id"]] = run_one(t, tdir, RUNS / "bench" / stamp / config / t["id"])
+
+    # A task that ended with rung "error" never reached the model or the checks (the
+    # model service failed, usually a quota the wait could not sit out). That says
+    # nothing about the design, so each such task gets one more go before the file is written.
+    errored = [(t, tdir) for t, tdir in tasks if rows[t["id"]].failed_rung == "error"]
+    if errored:
+        typer.echo("")
+        typer.echo(f"{len(errored)} task(s) hit an engine error, not a model failure; running them once more")
+        for t, tdir in errored:
+            rows[t["id"]] = run_one(t, tdir, RUNS / "bench" / stamp / config / f"{t['id']}_again")
+
+    row_list = list(rows.values())
+    if merge:
+        p = merge_results(results_path(results_dir, config, label), row_list)
+    else:
+        p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, row_list, label=label)
     typer.echo("")
-    n = len(rows)
-    at1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
-    typer.echo(f"pass@1 {at1}/{n}, pass@3 {sum(r.passed for r in rows)}/{n}. wrote {p}")
+    n = len(row_list)
+    at1 = sum(1 for r in row_list if r.passed and r.passed_attempt == 1)
+    typer.echo(f"pass@1 {at1}/{n}, pass@3 {sum(r.passed for r in row_list)}/{n}. wrote {p}")
+    still = [r.task_id for r in row_list if r.failed_rung == "error"]
+    if still:
+        typer.echo(f"still an engine error, not counted as a model result: {', '.join(still)}. "
+                   f"Run them again with --only {','.join(still)} --merge")
     typer.echo("")
     typer.echo(summary_table(results_dir))
 

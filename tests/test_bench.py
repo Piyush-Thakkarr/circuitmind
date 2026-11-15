@@ -5,7 +5,9 @@ import json
 from circuitmind.bench import (
     TaskResult,
     estimate_sim_ms,
+    merge_results,
     result_files,
+    results_path,
     summary_table,
     write_results,
 )
@@ -55,3 +57,18 @@ def test_cost_estimate_counts_simulations_per_config():
     assert estimate_sim_ms("A", tasks) == (7000, 28000)   # one final simulation per task
     assert estimate_sim_ms("C", tasks) == (7000, 28000)   # retries are static, still one simulation
     assert estimate_sim_ms("D", tasks) == (21000, 84000)  # up to three simulations per task
+
+
+def test_merge_results_replaces_rows_and_records_what_was_redone(tmp_path):
+    rows = [_row("T1", True, 1, 1), _row("T2", False, 0, None, "error"), _row("T3", False, 0, None, "error")]
+    p = write_results(tmp_path, "C", "model", "hash", rows, label="run1")
+    assert p.name == "C_run1.json"
+    assert results_path(tmp_path, "C", "run1") == p
+    merge_results(p, [_row("T2", True, 2, 2)])
+    d = json.loads(p.read_text())
+    assert [r["task_id"] for r in d["rows"]] == ["T1", "T2", "T3"]
+    assert d["passed"] == 2 and d["pass_at_1"] == 1 and d["pass_at_3"] == 2
+    assert d["rows"][1]["failed_rung"] == "" and d["rows"][2]["failed_rung"] == "error"
+    assert d["label"] == "run1" and d["first_written"]
+    assert d["redone"] == [{"when": d["when"], "tasks": ["T2"]}]
+    assert "| C run1 | 3 | 1/3 | 2/3 |" in summary_table(tmp_path)

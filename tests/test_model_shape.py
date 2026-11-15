@@ -100,5 +100,6 @@ def test_daily_window_wait_only_when_asked(monkeypatch):
     assert daily_window_wait(GROQ_TPD) is None
     monkeypatch.setenv("CIRCUITMIND_WAIT_FOR_QUOTA", "1")
     assert abs(daily_window_wait(GROQ_TPD) - (14 * 60 + 18.816 + 2)) < 1e-3
-    assert daily_window_wait(GROQ_TPD.replace("14m18.815999999s", "1h2m")) is None  # over half an hour
+    assert abs(daily_window_wait(GROQ_TPD.replace("14m18.815999999s", "1h2m")) - 3722) < 1e-6
+    assert daily_window_wait(GROQ_TPD.replace("14m18.815999999s", "2h0m1s")) is None  # over two hours
     assert daily_window_wait("Rate limit reached") is None
