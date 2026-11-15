@@ -194,7 +194,7 @@ def retry_wait_seconds(code: int, text: str, headers: Any, attempt: int) -> floa
     return min(wait, _MAX_RETRY_WAIT_S)
 
 
-_DAILY_WAIT_CAP_S = 1800
+_DAILY_WAIT_CAP_S = 7200
 _DAILY_WAITS_MAX = 48
 _RETRY_IN_LONG_RE = re.compile(r"try again in\s*(?:(\d+)h)?(?:(\d+)m)?(?:([0-9.]+)s)?", re.IGNORECASE)
 
@@ -206,7 +206,10 @@ def daily_window_wait(text: str) -> float | None:
     at a time and the 429 says when ("Please try again in 14m18.8s"). A bench
     sweep that waits that long and carries on finishes by itself overnight;
     a web request must not wait, so this is used only when
-    CIRCUITMIND_WAIT_FOR_QUOTA is set. Waits over half an hour are not worth it.
+    CIRCUITMIND_WAIT_FOR_QUOTA is set. Waits over two hours are not worth it:
+    a cap that low (half an hour, until 15 Nov 2026) made four tasks of a sweep
+    fail with "quota exhausted" when the window was busy and the 429 asked for
+    35 minutes.
     """
     if not os.environ.get("CIRCUITMIND_WAIT_FOR_QUOTA"):
         return None

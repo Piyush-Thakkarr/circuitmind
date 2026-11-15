@@ -122,14 +122,16 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
                       passed_attempt=res.passed_attempt if passed else None)
 
 
-def write_results(results_dir: Path, config: str, model: str, cat_hash: str, rows: list[TaskResult],
-                  label: str = "") -> Path:
-    """Write ``<config>.json``, or ``<config>_<label>.json`` when a label such as run1 is given."""
-    results_dir.mkdir(parents=True, exist_ok=True)
+def results_path(results_dir: Path, config: str, label: str = "") -> Path:
+    """``<config>.json``, or ``<config>_<label>.json`` when a label such as run1 is given."""
+    return results_dir / (f"{config}_{label}.json" if label else f"{config}.json")
+
+
+def _summary(config: str, model: str, cat_hash: str, rows: list[TaskResult], label: str) -> dict:
     n = len(rows)
     passed = sum(r.passed for r in rows)
     pass_at_1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
-    data = {
+    return {
         "config": config, "model": model, "catalogue": cat_hash,
         "when": time.strftime("%Y-%m-%d %H:%M:%S"),
         "tasks": n, "passed": passed, "pass_rate": round(passed / n, 3) if n else 0.0,
@@ -140,11 +142,36 @@ def write_results(results_dir: Path, config: str, model: str, cat_hash: str, row
         "sim_ms_total": sum(r.sim_ms for r in rows),
         "tokens_in": sum(r.tokens_in for r in rows), "tokens_out": sum(r.tokens_out for r in rows),
         "rows": [r.__dict__ for r in rows],
+        "label": label,
     }
-    data["label"] = label
-    p = results_dir / (f"{config}_{label}.json" if label else f"{config}.json")
-    p.write_text(json.dumps(data, indent=2))
+
+
+def write_results(results_dir: Path, config: str, model: str, cat_hash: str, rows: list[TaskResult],
+                  label: str = "") -> Path:
+    """Write the results file for one sweep (see ``results_path``)."""
+    results_dir.mkdir(parents=True, exist_ok=True)
+    p = results_path(results_dir, config, label)
+    p.write_text(json.dumps(_summary(config, model, cat_hash, rows, label), indent=2))
     return p
+
+
+def merge_results(path: Path, rows: list[TaskResult]) -> Path:
+    """Replace the rows of the tasks in ``rows`` inside an existing results file and redo its totals.
+
+    For repairing a sweep in which a task ended with rung "error" (the model
+    service failed, not the design): run that task again with ``--only`` and
+    ``--merge``. The file records which tasks were redone and when.
+    """
+    d = json.loads(path.read_text())
+    by_id = {r["task_id"]: r for r in d["rows"]}
+    for r in rows:
+        by_id[r.task_id] = r.__dict__
+    merged = [TaskResult(**by_id[k]) for k in sorted(by_id)]
+    data = _summary(d["config"], d["model"], d["catalogue"], merged, d.get("label", ""))
+    data["first_written"] = d.get("first_written", d.get("when"))
+    data["redone"] = d.get("redone", []) + [{"when": data["when"], "tasks": sorted(r.task_id for r in rows)}]
+    path.write_text(json.dumps(data, indent=2))
+    return path
 
 
 def _pass_at_1(d: dict) -> int:

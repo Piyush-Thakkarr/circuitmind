@@ -358,3 +358,14 @@ message says (up to 30 minutes at a time, up to 48 times) and carries on, so one
 all four configurations unattended over a day or two. The web engine keeps failing fast with the
 plain "quota used up" sentence, because a person at a browser cannot wait half an hour; the wait
 is switched on only by the bench command (CIRCUITMIND_WAIT_FOR_QUOTA).
+
+**A benchmark row that ends with rung "error" is a service failure, not a model result; the sweep
+redoes it once and `--merge` repairs the file.** In run1 on 15 Nov, four tasks (T10 and T18 in C,
+T18 and T19 in D) never reached the model: the wait above was capped at 30 minutes and Groq asked
+for longer, so the provider raised "daily quota exhausted" and the sweep wrote the task down as a
+failure with zero attempts. Counting that against the model would understate C and D. Now the cap
+is two hours, a sweep runs every "error" task once more at the end before it writes the results
+file, and `circuitmind bench C --only T10_two_button_counter --label run1 --merge` reruns a task
+later and puts its row into the existing file, recording which tasks were redone and when. The
+pilot's five-task files moved to benchmark/results/pilot_5_tasks so the report command, which
+reads every file in the results folder, only sees 25-task runs.
