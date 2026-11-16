@@ -391,4 +391,6 @@ B's T25 on 16 Nov was written down as a failure after two runs with zero serial 
 compiled binary and diagram passed with wokwi-cli by hand ten minutes later (DONE printed, scenario
 completed). The task was redone with `--only T25_stepper_turn --merge` like the quota errors. Every
 real run of an ESP32 in Wokwi prints the "ets Jul 29 2019" ROM banner first, so an empty log means the
-chip never ran; the harness could treat that as a flake and retry, which it does not yet.
+chip never ran. The harness already runs a timed-out simulation a second time, and both runs came
+back empty, so a third automatic try is not justified; the remedy is the `--merge` redo, and the
+results file says it happened.

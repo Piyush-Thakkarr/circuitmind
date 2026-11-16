@@ -54,7 +54,7 @@ The frontend is already deployed on Vercel. The gap is the engine, which runs on
 - [x] benchmark/results/README.md: table with pass@1 and pass@3 per config, min to max over three runs; per-task matrix (which tasks fail where, at which rung); failure categories (invented pin, wrong GPIO, missing resistor, electrical rule, library error, logic error caught only by simulation); what feedback fixed and what it did not. Written 16 Nov 2026 from run 1; the ranges fill in as runs 2 and 3 land (`circuitmind report`).
 - [x] README status table updated to the 25-task numbers. Plain-language reading of the result, same style as "Does the checking actually help?".
 - [x] One page for the project review: problem, approach, the table, the honest limits. docs/review.md.
-- [ ] Follow-up found in run 1: a scenario pin check assumes the LED's polarity (C T18 lit the LED active-low and was marked a fail). Let scenarios say "led1 on" and have the adapter derive the GPIO level from the wiring; and treat a simulation with an empty serial log (no ROM banner) as a flake to retry.
+- [ ] Follow-up found in run 1: a scenario pin check assumes the LED's polarity (C T18 lit the LED active-low and was marked a fail). Let scenarios say "led1 on" and have the adapter derive the GPIO level from the wiring. (An empty serial log is already retried once as a timeout; B T25 was empty twice and was redone with `--merge`.)
 
 ## 5. Towards an electronics engine of our own
 Only after sections 0 to 4 are closed.
