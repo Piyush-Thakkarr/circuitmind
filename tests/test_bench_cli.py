@@ -1,12 +1,21 @@
 """The bench command gives a task that hit an engine error one more go, and --merge repairs a results file."""
 
 import json
+import re
 
 from typer.testing import CliRunner
 
 import circuitmind.bench as bench_mod
 from circuitmind.bench import TaskResult, write_results
 from circuitmind.cli import app
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _plain(text: str) -> str:
+    """Typer prints errors in a coloured Rich box when it thinks it has a terminal (it does on
+    GitHub Actions): drop the colour codes and the box, and join the wrapped lines."""
+    return " ".join(_ANSI.sub("", text).replace("│", " ").split())
 
 
 def _fake_run_task(calls):
@@ -44,7 +53,7 @@ def test_bench_merge_needs_only_and_an_existing_file(tmp_path, monkeypatch):
     res = CliRunner().invoke(app, ["bench", "A", "--provider", "fake", "--only", "T01_blink", "--yes", "--merge",
                                    "--results", str(tmp_path), "--label", "t"])
     assert res.exit_code != 0
-    assert "--merge needs --only and an existing results file" in res.output
+    assert "--merge needs --only and an existing results file" in _plain(res.output)
 
     calls: list[str] = []
     monkeypatch.setattr(bench_mod, "run_task", _fake_run_task(calls))
