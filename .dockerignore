@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+runs
+web
+docs
+node_modules
+.vercel
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache

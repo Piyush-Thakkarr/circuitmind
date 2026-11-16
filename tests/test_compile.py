@@ -100,3 +100,15 @@ def test_the_cores_own_esptool_is_not_treated_as_fast(monkeypatch):
     assert c.fast_esptool() is None
     cmd = c.compile_command("f", __import__("pathlib").Path("s"), __import__("pathlib").Path("b"), None)
     assert not any(a.startswith("tools.esptool_py") for a in cmd)
+
+
+def test_compile_jobs_come_from_the_environment(monkeypatch, tmp_path):
+    from circuitmind.harness.compile import compile_command
+
+    monkeypatch.delenv("CIRCUITMIND_COMPILE_JOBS", raising=False)
+    assert "--jobs" not in compile_command("esp32:esp32:x", tmp_path, tmp_path / "b", None)
+    monkeypatch.setenv("CIRCUITMIND_COMPILE_JOBS", "1")
+    cmd = compile_command("esp32:esp32:x", tmp_path, tmp_path / "b", None)
+    assert cmd[cmd.index("--jobs") + 1] == "1"
+    monkeypatch.setenv("CIRCUITMIND_COMPILE_JOBS", "lots")
+    assert "--jobs" not in compile_command("esp32:esp32:x", tmp_path, tmp_path / "b", None)

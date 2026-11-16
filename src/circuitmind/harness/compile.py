@@ -85,6 +85,11 @@ def compile_command(fqbn: str, sketch_dir: Path, build_dir: Path, esptool: Path 
         "--warnings",
         "none",
     ]
+    jobs = os.environ.get("CIRCUITMIND_COMPILE_JOBS", "").strip()
+    if jobs.isdigit():
+        # A small shared host (the 1 GB Oracle VM) compiles with one job so a
+        # build never takes every core and all the memory at once.
+        cmd += ["--jobs", jobs]
     if esptool is not None:
         cmd += [
             "--build-property",
