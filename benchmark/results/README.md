@@ -102,7 +102,7 @@ attempt, which is also a reminder that the model is not deterministic at tempera
 
 **D passed everything in run 1 (25 of 25 on pass@3, 23 on pass@1).** Its two retries were the same T04 and T13 slips as in C, fixed on the second attempt. No D attempt failed in simulation this run, so the one thing D adds over C (retrying on what the simulator saw) was not exercised; in C the two simulation failures (T05, T18) had no retry to use. One run is not enough to put a number on that gap.
 
-**One C failure is the checker's, not the model's (T18).** The redone C design put the LED's anode on 3V3 and its cathode through the resistor to D2, and drove D2 low to turn it on. That LED lights on a desk. The scenario expects D2 high while HEATING, so the harness marked it a fail, and the table reports what the harness said. Fixing this means letting a scenario say "led1 on" and deriving the pin level from the wiring; see the roadmap.
+**One C failure is the checker's, not the model's (T18).** The redone C design put the LED's anode on 3V3 and its cathode through the resistor to D2, and drove D2 low to turn it on. That LED lights on a desk. The scenario expects D2 high while HEATING, so the harness marked it a fail, and the table reports what the harness said. Since 16 Nov 2026 the LED scenarios say "led1 on" (`expect-part`) and the harness derives the pin level from the wiring, so this design would pass; the run 1 numbers are left as the harness scored them at the time.
 
 ## Why attempts failed
 

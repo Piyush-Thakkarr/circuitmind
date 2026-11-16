@@ -394,3 +394,34 @@ real run of an ESP32 in Wokwi prints the "ets Jul 29 2019" ROM banner first, so 
 chip never ran. The harness already runs a timed-out simulation a second time, and both runs came
 back empty, so a third automatic try is not justified; the remedy is the `--merge` redo, and the
 results file says it happened.
+
+**Scenarios say "led1 on", not "D2 high": the `expect-part` step, and the harness reads the GPIO level
+off the wiring.** wokwi-cli only has `expect-pin`, which needs a level. A scenario now writes
+`expect-part: {part-id: led1, gpio: D2, state: on}` and `adapt_to_design` turns it into `expect-pin`
+on D2 with value 1 when the GPIO sits on the anode side (through the resistor) and value 0 when it
+sits on the cathode side; the same for an RGB LED with `pin: R` and its COM pin. `gpio` is optional
+and keeps the check as strict as before: the request names the GPIO, so an LED on another pin still
+fails ("the request puts led1 on D4 but the design drives it from D2"); it also picks the right LED
+when a design has several (T11). The eight LED scenarios (T01, T05, T11, T12, T16, T17, T18, T24) use
+it and their expansions are byte for byte the old scenarios for the reference designs; all eight
+references passed on 16 Nov 2026. Buzzer, 7-segment and relay checks stay raw `expect-pin`: the
+7-segment has the same common-anode question but no task has tripped on it yet. The web app's
+auto-built scenario uses `expect-part` too and its check sentence says which side the GPIO is on.
+Run 1's active-low T18 design (anode on 3V3, resistor from cathode to D2, LOW to heat) now expands to
+"D2 low at HEATING, high at READY", which is what that firmware does; the unit test covers that exact
+wiring. Its simulated run is still owed, see below.
+
+**The resistor walk stops at a supply rail.** First try of the active-low T18 design failed with
+"led1 is not switched by one GPIO": the anode is on 3V3, and the DS18B20's 4.7k pull-up also runs
+from 3V3 to D15, so crossing resistors from the anode net reached D15 and both LED sides looked
+GPIO-driven. A rail is a fixed voltage; nothing beyond it drives the LED. `through_resistors` no
+longer expands out of a net that holds GND, 3V3 or VIN. The input-only check uses the same walk and
+had the same latent false positive.
+
+**The Wokwi free plan's 50 simulated minutes for November 2026 are gone.** Right after the eight
+reference checks on 16 Nov the simulator answered "API Error: You have used up your Free plan monthly
+CI minute quota". Run 1 (four configurations, 25 tasks, retries and timeout re-runs charged twice)
+took most of it. The harness reports that message as "simulation failed (exit 1)", which a sweep
+would count as a design failure; runs 2 and 3 wait for the reset, and a quota check before each sweep
+is the next harness item. The simulated confirmation of the active-low T18 design is owed when the
+quota is back.

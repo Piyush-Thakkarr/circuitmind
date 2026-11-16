@@ -4,12 +4,12 @@ author: circuitmind
 steps:
   - wait-serial: "BLINK"
   - delay: 100ms
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 1
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: on
   - delay: 500ms
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 0
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: off

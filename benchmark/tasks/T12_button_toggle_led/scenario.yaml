@@ -3,19 +3,19 @@ version: 1
 author: circuitmind
 steps:
   - delay: 500ms
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 0
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: off
   - set-control:
       part-id: btn1
       control: pressed
       value: 1
   - wait-serial: "LED=ON"
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 1
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: on
   - set-control:
       part-id: btn1
       control: pressed
@@ -26,10 +26,10 @@ steps:
       control: pressed
       value: 1
   - wait-serial: "LED=OFF"
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 0
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: off
   - set-control:
       part-id: btn1
       control: pressed

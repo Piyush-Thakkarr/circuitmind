@@ -6,10 +6,17 @@ does not, so one is built from the design itself:
 - press every pushbutton in the design
 - wait for the status line the firmware promised to print
 - if the prompt says an LED should turn on (and not blink, fade or toggle),
-  check the GPIO that drives each LED is high once the status line has printed
+  check each LED is lit once the status line has printed
 
 The list of plain sentences in ``checks`` is shown to the user, so "verified"
 never means more than what was actually exercised.
+
+This module also owns the ``expect-part`` step, which wokwi-cli does not know.
+A scenario writes ``expect-part: {part-id: led1, state: on}`` and
+``adapt_to_design`` turns it into the ``expect-pin`` wokwi-cli does know, with
+the GPIO level worked out from the design's wiring: a GPIO on the anode side
+lights the LED with HIGH, a GPIO on the cathode side lights it with LOW. Both
+wirings light the LED on a desk, so both must pass the check.
 """
 
 from __future__ import annotations
@@ -20,7 +27,7 @@ from dataclasses import dataclass, field
 
 import yaml
 
-from .harness.electrical import driving_board_pin
+from .harness.electrical import gpio_drive
 from .ir import Design
 
 _LED_ON_RE = re.compile(
@@ -41,8 +48,8 @@ def _press(part_id: str) -> str:
     return f"  - set-control:\n      part-id: {part_id}\n      control: pressed\n      value: 1"
 
 
-def _expect_pin(pin: str, value: int) -> str:
-    return f"  - expect-pin:\n      part-id: esp\n      name: {pin}\n      value: {value}"
+def _expect_part(part_id: str, state: str) -> str:
+    return f"  - expect-part:\n      part-id: {part_id}\n      state: {json.dumps(state)}"
 
 
 def led_should_be_on(prompt: str) -> bool:
@@ -66,11 +73,15 @@ def build_scenario(design: Design, prompt: str, *, name: str = "web") -> Scenari
         for part in design.parts:
             if part.type != "wokwi-led":
                 continue
-            pin = driving_board_pin(design, part.id, "A") or driving_board_pin(design, part.id, "C")
-            if pin is None:
-                continue
-            steps.append(_expect_pin(pin, 1))
-            checks.append(f"checked {pin}, which drives {part.id}, was high after that line")
+            drive = gpio_drive(design, part.id, "A", "C")
+            if drive is None:
+                continue  # not driven by a GPIO (a relay contact, say): nothing to check
+            gpio, active_high = drive
+            steps.append(_expect_part(part.id, "on"))
+            checks.append(
+                f"checked {part.id} was on after that line: {gpio} {'high' if active_high else 'low'}, "
+                f"the GPIO is on its {'anode' if active_high else 'cathode'} side"
+            )
 
     if not any(c.startswith("pressed") for c in checks):
         checks.append("no inputs were exercised: the design has no pushbutton")
@@ -96,13 +107,105 @@ CONTROL_TYPES: dict[str, tuple[str, ...]] = {
 }
 
 
+# Parts an expect-part step can name, with the pin current enters and the pin it leaves.
+# The RGB LED needs a `pin` (R, G or B) in the step to say which colour.
+_LED_TERMINALS: dict[str, tuple[str | None, str]] = {
+    "wokwi-led": ("A", "C"),
+    "wokwi-rgb-led": (None, "COM"),
+}
+
+
+def _state_on(value: object) -> bool | None:
+    """on/off, true/false, 1/0 -> True/False; None for anything else.
+
+    PyYAML reads a bare `on` and `off` as booleans, so both forms arrive here.
+    """
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in ("on", "1", "true", "high", "lit"):
+        return True
+    if text in ("off", "0", "false", "low", "dark"):
+        return False
+    return None
+
+
+def _expand_expect_part(ep: dict, types: dict[str, str], design: Design) -> tuple[dict | None, str | None, str | None]:
+    """Turn one expect-part step into an expect-pin step.
+
+    Returns (expect_pin_step, note, problem). Exactly one of step and problem is set.
+    The LED is found by its id when the design uses it, else by the GPIO the step
+    names (`gpio`, the pin the request told the model to use), else by type when
+    the design has exactly one such part.
+    """
+    pid = str(ep.get("part-id", ""))
+    want = _state_on(ep.get("state"))
+    if want is None:
+        return None, None, f"expect-part {pid}: state must be on or off, not {ep.get('state')!r}"
+    channel = ep.get("pin")
+    hint = ep.get("gpio")
+    hint = str(hint) if hint is not None else None
+
+    def drive_of(part_id: str) -> tuple[str, bool] | None:
+        hot, common = _LED_TERMINALS[types[part_id]]
+        if hot is None:
+            if not channel:
+                return None
+            hot = str(channel)
+        return gpio_drive(design, part_id, hot, common)
+
+    fitting = [i for i, t in types.items() if t in _LED_TERMINALS]
+    if pid in types and types[pid] in _LED_TERMINALS:
+        chosen = pid
+    elif hint:
+        on_hint = [i for i in fitting if (d := drive_of(i)) and d[0] == hint]
+        if len(on_hint) != 1:
+            kind = "an LED" if on_hint == [] else "one LED"
+            have = f"; it has {len(on_hint)}" if on_hint else ""
+            return None, None, f"the test expects {kind} driven from {hint} but the design has none wired to it{have}"
+        chosen = on_hint[0]
+    elif len(fitting) == 1:
+        chosen = fitting[0]
+    elif fitting:
+        return None, None, (
+            f"the test checks an LED called {pid} but the design has several ({', '.join(fitting)}) "
+            f"and none is called {pid}; use the part names the request gives"
+        )
+    else:
+        return None, None, f"the test checks an LED called {pid} but the design has no LED"
+
+    label = f"{chosen}:{channel}" if channel else chosen
+    drive = drive_of(chosen)
+    if drive is None:
+        if types[chosen] == "wokwi-rgb-led" and not channel:
+            return None, None, f"expect-part {pid}: an RGB LED needs pin: R, G or B"
+        return None, None, (
+            f"{label} is not switched by one GPIO: wire one side of it, through its resistor, "
+            "to a GPIO and the other side to a rail"
+        )
+    gpio, active_high = drive
+    if hint and gpio != hint:
+        return None, None, f"the request puts {label} on {hint} but the design drives it from {gpio}"
+    level = 1 if want == active_high else 0
+    side = "anode" if active_high else "cathode"
+    if types[chosen] == "wokwi-rgb-led":
+        side = f"{channel} pin" if active_high else "COM pin"
+    note = f"{label} {'on' if want else 'off'} = {gpio} {'high' if level else 'low'} (GPIO on the {side} side)"
+    if chosen != pid:
+        note = f"{pid} -> {chosen}, " + note
+    return {"expect-pin": {"part-id": "esp", "name": gpio, "value": level}}, note, None
+
+
 def adapt_to_design(scenario_yaml: str, design: Design) -> tuple[str, list[str], list[str]]:
-    """Point a task scenario's set-control steps at the parts this design actually has.
+    """Point a task scenario at the parts this design actually has, and expand expect-part.
 
     A scenario names parts (btn1, joy1). A model design may call its button
     something else. When exactly one design part can take the control, the step
     is retargeted and a note says so. When none can, that is a real failure:
     the design lacks a part the task needs, and the message says which.
+
+    ``expect-part`` steps (which wokwi-cli does not know) become ``expect-pin``
+    steps with the level read off the wiring; see the module docstring.
 
     Returns (adapted yaml, notes, missing). Steps whose part-id already names a
     design part of a fitting type are left alone.
@@ -113,8 +216,19 @@ def adapt_to_design(scenario_yaml: str, design: Design) -> tuple[str, list[str],
     missing: list[str] = []
     remap: dict[str, str] = {}
     taken: set[str] = set()
+    expanded = False
 
-    for step in doc.get("steps") or []:
+    steps = doc.get("steps") or []
+    for i, step in enumerate(steps):
+        if isinstance(step, dict) and "expect-part" in step:
+            new_step, note, problem = _expand_expect_part(step["expect-part"] or {}, types, design)
+            if problem:
+                missing.append(problem)
+            else:
+                steps[i] = new_step
+                notes.append(note)
+                expanded = True
+            continue
         if not isinstance(step, dict) or "set-control" not in step:
             continue
         sc = step["set-control"]
@@ -145,5 +259,5 @@ def adapt_to_design(scenario_yaml: str, design: Design) -> tuple[str, list[str],
             else:
                 missing.append(f"the scenario needs a {kind} called {pid} but the design has no such part")
 
-    text = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True) if (notes or missing) else scenario_yaml
+    text = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True) if (notes or missing or expanded) else scenario_yaml
     return text, notes, sorted(set(missing))

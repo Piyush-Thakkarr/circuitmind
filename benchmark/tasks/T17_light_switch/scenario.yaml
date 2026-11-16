@@ -3,16 +3,16 @@ version: 1
 author: circuitmind
 steps:
   - wait-serial: "LIGHT"
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 0
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: off
   - set-control:
       part-id: ldr1
       control: lux
       value: 10
   - wait-serial: "DARK"
-  - expect-pin:
-      part-id: esp
-      name: D2
-      value: 1
+  - expect-part:
+      part-id: led1
+      gpio: D2
+      state: on
