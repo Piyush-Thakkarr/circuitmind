@@ -13,7 +13,6 @@ from pathlib import Path
 from ..catalogue import Catalogue
 from ..expand import canonical_json, expand
 from ..ir import Design
-from ..scenario import adapt_to_design
 from .compile import run_compile
 from .consistency import run_consistency
 from .electrical import run_electrical
@@ -139,6 +138,8 @@ def run_ladder(
 
     if scenario is None:
         raise ValueError("scenario required when simulate=True")
+    from ..scenario import adapt_to_design  # here, not at the top: scenario imports this package
+
     adapted, notes, missing = adapt_to_design(scenario.read_text(), design)
     if missing:
         r = RungResult(
@@ -156,7 +157,7 @@ def run_ladder(
     write_wokwi_toml(workdir, bins.bin, bins.elf)
     r = run_simulate(workdir, scen_path, timeout_ms)
     if notes:
-        r.summary = (r.summary + "; " if r.summary else "") + "scenario parts mapped: " + ", ".join(notes)
+        r.summary = (r.summary + "; " if r.summary else "") + "scenario adapted: " + ", ".join(notes)
         r.extra["scenario_notes"] = notes
     out.results.append(r)
     notify(r)

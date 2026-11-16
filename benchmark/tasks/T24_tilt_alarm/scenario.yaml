@@ -3,16 +3,16 @@ version: 1
 author: circuitmind
 steps:
   - wait-serial: "LEVEL"
-  - expect-pin:
-      part-id: esp
-      name: D13
-      value: 0
+  - expect-part:
+      part-id: led1
+      gpio: D13
+      state: off
   - set-control:
       part-id: imu1
       control: accelX
       value: 0.7
   - wait-serial: "TILT"
-  - expect-pin:
-      part-id: esp
-      name: D13
-      value: 1
+  - expect-part:
+      part-id: led1
+      gpio: D13
+      state: on

@@ -131,12 +131,24 @@ class _Nets:
     def has_resistor(self, net: str) -> bool:
         return any(self.types.get(r.split(":", 1)[0]) == _RESISTOR for r in self.pins_of(net))
 
+    def on_rail(self, net: str) -> bool:
+        return any(_rail(bp) for bp in self.board_pins(net))
+
     def through_resistors(self, net: str) -> set[str]:
-        """All nets reachable from `net` by crossing resistors."""
+        """All nets reachable from `net` by crossing resistors.
+
+        The walk never leaves a net that holds a supply rail (GND, 3V3, VIN): a
+        rail is a fixed voltage, so whatever hangs off it through another
+        resistor (a sensor's pull-up, say) is not driving the part we started
+        from. Seen for real with T18: the LED's anode on 3V3 and the DS18B20
+        pull-up from 3V3 to D15 made the anode side look driven by D15.
+        """
         seen = {net}
         todo = deque([net])
         while todo:
             n = todo.popleft()
+            if self.on_rail(n):
+                continue
             for m in self._bridges.get(n, ()):
                 if m not in seen:
                     seen.add(m)
@@ -228,6 +240,28 @@ def driving_board_pin(design: Design, part_id: str, pin: str) -> str | None:
         for bp in sorted(nets.board_pins(reach)):
             if bp.startswith("D") and bp[1:].isdigit():
                 return bp
+    return None
+
+
+def gpio_drive(design: Design, part_id: str, hot: str, common: str) -> tuple[str, bool] | None:
+    """Which GPIO drives a two-terminal load and which way round it is wired.
+
+    `hot` is the pin current enters (an LED's anode A, an RGB LED's colour pin),
+    `common` the pin it leaves (cathode C, or COM). Resistors are crossed on
+    both sides. Returns (gpio, active_high): active_high is True when the GPIO
+    sits on the hot side, so a HIGH output lights the part, and False when the
+    GPIO sits on the common side, so a LOW output lights it. None when no GPIO
+    reaches either side, or when a GPIO sits on both (the harness cannot know
+    which one the firmware switches).
+    """
+    a = driving_board_pin(design, part_id, hot)
+    c = driving_board_pin(design, part_id, common)
+    if a and c:
+        return None
+    if a:
+        return a, True
+    if c:
+        return c, False
     return None
 
 
