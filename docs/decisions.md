@@ -445,3 +445,17 @@ reported it, and `bench` refused with exit 2. Groq's daily window was also used 
 Gemini key is set, so the web engine path was checked with the mock provider replaying T01's reference
 design: the reply had `simulate: false` and the notice, the five free rungs ran for real (compile 14 s),
 and the result came back passed, unsimulated, with the notice and the unverified guide note.
+
+**The engine runs in Docker on the owner's Oracle Always Free VM, behind the Caddy that already serves
+another project; port 8001 inside, one Caddy site block outside.** Decided 16 Nov 2026 after the
+Hugging Face route closed. The VM has 1 OCPU and 1 GB of memory and also runs TARS on Mars, which
+owns 127.0.0.1:8000 and ports 80 and 443 through Caddy, so the container listens on 127.0.0.1:8001
+with `--memory 700m --memory-swap 2g --cpu-shares 512` and the Caddyfile gained one block for
+circuitmind.80-225-202-218.sslip.io with `flush_interval -1` so the progress stream is not buffered.
+The image (3.7 GB) is built on the laptop for linux/amd64 and streamed in with `docker save | ssh
+docker load` (56 minutes at about 2.2 MB/s); nothing is built on the VM. Secrets reach the container
+through `--env-file` from a mode-600 file on the VM. Measured there: cold compile of T01 185 s with
+a 275 MiB peak, warm 126 s with 270 MiB, two jobs 130 s with 358 MiB, so the image compiles with
+one job. Compile fits the memory limit; the time is the shared CPU. Caddy was reloaded, never
+restarted, and TARS answered 200 before and after. The end-to-end T01 run through the public address
+is owed when Wokwi's monthly quota resets. Full commands in docs/deploy.md.

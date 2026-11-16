@@ -70,7 +70,24 @@ sudo docker stats --no-stream circuitmind-engine
 sudo docker logs --tail 50 circuitmind-engine
 ```
 
-Measured on first deployment: MEASUREMENTS
+Measured on first deployment, 16 Nov 2026 (TARS idle, load average about 2 on the one shared OCPU):
+
+| What | Result |
+|---|---|
+| `/health` through Caddy from the internet | 200, about 0.3 s |
+| Cold compile of T01's reference (empty cache, one job) | 185 s, peak 275 MiB in the container |
+| Warm compile of the same sketch (cache filled, one job) | 126 s, peak 270 MiB |
+| Warm compile with two jobs | 130 s, peak 358 MiB: no faster, so the image keeps one job |
+| TARS at https://80-225-202-218.sslip.io after the Caddy reload | 200 |
+
+The compile fits the 700 MB limit with room to spare; the wait is CPU. The same compile takes 11 to
+14 s on the laptop. A full attempt on the VM is therefore about two and a half minutes of compile
+plus the simulation, and the web app's wait estimate must say so when this engine is the default.
+
+Not yet checked: a T01 run end to end through this engine. Wokwi's free monthly CI minutes were used
+up on 16 Nov, so the simulate rung cannot run before the monthly reset; the engine then runs the free
+rungs and says why the simulation was skipped. The end-to-end run, and switching the web app's default
+engine to this address, wait for that reset.
 
 ## Updating
 
