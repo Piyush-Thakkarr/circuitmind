@@ -1,7 +1,7 @@
-# The engine as a container, for any Docker host that can run it.
-# It is not deployed anywhere yet: Hugging Face Docker Spaces need a paid plan
-# since 2026 and the project spends nothing. See docs/roadmap.md section 2.
-# Runs as user 1000 (what most hosts expect), listens on $PORT (default 7860).
+# The engine as a container. Built on a laptop for linux/amd64 and loaded on the
+# Oracle Always Free VM (see docs/deploy.md); nothing is built on the VM.
+# Runs as user 1000, listens on $PORT (default 7860). The arduino-cli cache at
+# /home/user/.cache/arduino is meant to be a volume so warm compiles survive restarts.
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git \
@@ -32,11 +32,10 @@ COPY --chown=user benchmark ./benchmark
 COPY --chown=user tools ./tools
 RUN pip install --no-cache-dir --user -e . "esptool==5.3.1"
 
-# Warm the build cache with a trivial ESP32 compile so the first real one is fast
-RUN mkdir -p /tmp/warm/warm && printf 'void setup(){} void loop(){}' > /tmp/warm/warm/warm.ino \
-    && arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 /tmp/warm/warm >/dev/null \
-    && rm -rf /tmp/warm
+COPY --chown=user tools/engine_start.sh /home/user/bin/engine_start.sh
 
+# One compile job: the target host has one shared CPU and 1 GB of memory.
+ENV CIRCUITMIND_COMPILE_JOBS=1
 ENV PORT=7860
 EXPOSE 7860
-CMD ["sh", "-c", "circuitmind serve --host 0.0.0.0 --port ${PORT}"]
+CMD ["/home/user/bin/engine_start.sh"]

@@ -277,6 +277,27 @@ def bench(
 
 
 @app.command()
+def warm(task: str = typer.Argument("T01_blink", help="Task whose reference design is compiled once.")) -> None:
+    """Compile one reference design to warm the arduino-cli cache. No model call, no simulation."""
+    from .harness.compile import run_compile
+    from .harness.ladder import sanitize_firmware
+
+    tdir = TASKS / task
+    design = Design.model_validate(json.loads((tdir / "reference" / "ir.json").read_text()))
+    wd = RUNS / "warm" / task
+    shutil.rmtree(wd, ignore_errors=True)
+    sketch = wd / "sketch"
+    sketch.mkdir(parents=True)
+    (sketch / "sketch.ino").write_text(sanitize_firmware(design.firmware))
+    t0 = time.time()
+    r, _ = run_compile(sketch, design.board, build_dir=wd / "build")
+    typer.echo(f"warm compile of {task}: {'ok' if r.passed else 'FAILED'} in {time.time() - t0:.0f} s")
+    if not r.passed:
+        typer.echo(r.summary, err=True)
+        raise typer.Exit(1)
+
+
+@app.command()
 def serve(
     host: str = "127.0.0.1",
     port: int = 8000,
