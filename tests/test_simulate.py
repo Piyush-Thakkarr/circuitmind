@@ -66,3 +66,32 @@ def test_a_real_scenario_failure_is_not_retried(tmp_path, monkeypatch):
     assert r.passed is False
     assert len(calls) == 1
     assert simulate.connection_flake("") is False
+
+
+def test_quota_refusal_is_its_own_state_not_charged_and_not_retried(tmp_path, monkeypatch):
+    from circuitmind import quota
+
+    monkeypatch.setenv("WOKWI_CLI_TOKEN", "test")
+    monkeypatch.setenv("CIRCUITMIND_QUOTA_FILE", str(tmp_path / "q.json"))
+    calls = []
+
+    def fake_once(project_dir, scenario, timeout_ms):
+        calls.append(1)
+        return 1, "API Error: You have used up your Free plan monthly CI minute quota. Please upgrade to a paid plan.", 1.2
+
+    monkeypatch.setattr(simulate, "_once", fake_once)
+    r = simulate.run_simulate(tmp_path, tmp_path / "scenario.yaml", timeout_ms=5000)
+    assert r.passed is False
+    assert r.extra["quota_exhausted"] is True
+    assert r.extra["sim_ms_charged"] == 0
+    assert r.extra["flake_retry"] is False
+    assert len(calls) == 1
+    assert r.summary == "not simulated: the month's free simulation minutes are used up"
+    assert "not a fault in the design" in r.detail
+    assert quota.state()["exhausted"] is True
+
+    # the next run that goes through forgets the refusal
+    monkeypatch.setattr(simulate, "_once", lambda project_dir, scenario, timeout_ms: (0, "boot\nBLINK\n", 3.0))
+    ok = simulate.run_simulate(tmp_path, tmp_path / "scenario.yaml", timeout_ms=5000)
+    assert ok.passed is True and "quota_exhausted" not in ok.extra
+    assert quota.state()["exhausted"] is False

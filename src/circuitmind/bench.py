@@ -30,6 +30,11 @@ CONFIGS: dict[str, dict] = {
 }
 
 
+QUOTA = "quota"
+"""``failed_rung`` of a task the sweep could not verify because the simulator's monthly quota
+was used up. Such a row is "not run", never a pass or a fail, and is left out of the totals."""
+
+
 @dataclass
 class TaskResult:
     task_id: str
@@ -41,6 +46,17 @@ class TaskResult:
     sim_ms: int
     seconds: float
     passed_attempt: int | None = None
+
+    @property
+    def not_run(self) -> bool:
+        return self.failed_rung == QUOTA
+
+
+def not_run_result(task_id: str, attempts: int = 0, tokens_in: int = 0, tokens_out: int = 0,
+                   seconds: float = 0.0) -> TaskResult:
+    """Row for a task the quota stopped: "not run (quota)" in every table."""
+    return TaskResult(task_id=task_id, passed=False, attempts=attempts, failed_rung=QUOTA,
+                      tokens_in=tokens_in, tokens_out=tokens_out, sim_ms=0, seconds=seconds)
 
 
 def load_tasks(tasks_dir: Path, only: list[str] | None = None) -> list[tuple[dict, Path]]:
@@ -96,6 +112,9 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
     sim_ms = _sim_ms(res)
     passed = res.passed
     failed = res.final.failed_rung if res.final else "model"
+    tin, tout = res.tokens()
+    if res.quota_exhausted:
+        return not_run_result(task["id"], len(res.attempts), tin, tout, time.time() - t0)
 
     # A, B and C verify the final design in simulation exactly once, outside the loop.
     if passed and not cfg["sim_in_loop"] and res.final and res.final.design:
@@ -106,6 +125,8 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
         shutil.copy(scenario, fdir / "scenario.yaml")
         out = run_ladder(res.final.design, cat, fdir, scenario=fdir / "scenario.yaml",
                          timeout_ms=timeout_ms, simulate=True)
+        if out.quota_exhausted:
+            return not_run_result(task["id"], len(res.attempts), tin, tout, time.time() - t0)
         passed = out.passed
         if not passed:
             failed = out.failed_rung.value if out.failed_rung else "simulate"
@@ -115,7 +136,6 @@ def run_task(config: str, task: dict, tdir: Path, provider: Provider, cat: Catal
         if on_event:
             on_event("final_sim", {"passed": passed})
 
-    tin, tout = res.tokens()
     return TaskResult(task_id=task["id"], passed=passed, attempts=len(res.attempts),
                       failed_rung="" if passed else failed, tokens_in=tin, tokens_out=tout,
                       sim_ms=sim_ms, seconds=time.time() - t0,
@@ -128,18 +148,23 @@ def results_path(results_dir: Path, config: str, label: str = "") -> Path:
 
 
 def _summary(config: str, model: str, cat_hash: str, rows: list[TaskResult], label: str) -> dict:
-    n = len(rows)
-    passed = sum(r.passed for r in rows)
-    pass_at_1 = sum(1 for r in rows if r.passed and r.passed_attempt == 1)
+    not_run = sorted(r.task_id for r in rows if r.not_run)
+    run = [r for r in rows if not r.not_run]
+    n = len(run)
+    passed = sum(r.passed for r in run)
+    pass_at_1 = sum(1 for r in run if r.passed and r.passed_attempt == 1)
     return {
         "config": config, "model": model, "catalogue": cat_hash,
         "when": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "tasks": n, "passed": passed, "pass_rate": round(passed / n, 3) if n else 0.0,
+        # tasks counts what was actually verified; not_run lists the tasks a used-up
+        # simulator quota stopped, so a sweep cut short is never reported as x of 25.
+        "tasks": n, "not_run": not_run,
+        "passed": passed, "pass_rate": round(passed / n, 3) if n else 0.0,
         # pass@1: the first design passed every check. pass@3: any attempt the
         # configuration allows passed (A and B allow one, so both numbers agree).
         "pass_at_1": pass_at_1, "pass_at_3": passed,
-        "mean_attempts_on_pass": round(sum(r.attempts for r in rows if r.passed) / passed, 2) if passed else None,
-        "sim_ms_total": sum(r.sim_ms for r in rows),
+        "mean_attempts_on_pass": round(sum(r.attempts for r in run if r.passed) / passed, 2) if passed else None,
+        "sim_ms_total": sum(r.sim_ms for r in run),
         "tokens_in": sum(r.tokens_in for r in rows), "tokens_out": sum(r.tokens_out for r in rows),
         "rows": [r.__dict__ for r in rows],
         "label": label,
@@ -195,6 +220,8 @@ def summary_table(results_dir: Path) -> str:
         for p in result_files(results_dir, c):
             d = json.loads(p.read_text())
             name = f"{c} {d['label']}" if d.get("label") else c
+            if d.get("not_run"):
+                name += f" ({len(d['not_run'])} not run: quota)"
             lines.append(f"| {name} | {d['tasks']} | {_pass_at_1(d)}/{d['tasks']} | {d['passed']}/{d['tasks']} | "
                          f"{d['mean_attempts_on_pass'] if d['mean_attempts_on_pass'] is not None else '-'} | "
                          f"{d['sim_ms_total']/1000:.0f} | {d['tokens_in']} / {d['tokens_out']} |")

@@ -13,6 +13,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from . import quota
 from .catalogue import Catalogue
 from .harness import LadderOutcome, run_ladder
 from .harness.types import Rung, RungResult
@@ -52,6 +53,14 @@ class RunResult:
     @property
     def final(self) -> Attempt | None:
         return self.attempts[-1] if self.attempts else None
+
+    @property
+    def quota_exhausted(self) -> bool:
+        """The run ended because the simulator refused for the month's quota.
+
+        The last attempt passed every free rung; its design is unverified, not wrong.
+        """
+        return bool(self.attempts) and self.attempts[-1].outcome.quota_exhausted
 
     @property
     def passed_attempt(self) -> int | None:
@@ -152,6 +161,11 @@ def run_generation(
 
         if att.passed:
             break
+        if outcome.quota_exhausted:
+            # Not a design fault: nothing to tell the model, and another attempt
+            # would be refused the same way.
+            emit("quota", {"attempt": n, "resets": quota.state().get("resets")})
+            break
         prev_wire = reply.wire
         prev_feedback = feedback
 
@@ -159,6 +173,7 @@ def run_generation(
         "request": request,
         "passed": result.passed,
         "passed_attempt": result.passed_attempt,
+        "quota_exhausted": result.quota_exhausted,
         "attempts": [{"n": a.n, "passed": a.passed, "failed_rung": a.failed_rung,
                       "tokens_in": a.reply.usage.tokens_in, "tokens_out": a.reply.usage.tokens_out,
                       "seconds": round(a.seconds, 1)} for a in result.attempts],

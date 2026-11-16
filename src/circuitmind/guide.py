@@ -62,7 +62,7 @@ def _board_pin_words(pin: str) -> str:
     return pin
 
 
-def build_guide(design: Design, cat: Catalogue, *, verified: bool = True) -> dict:
+def build_guide(design: Design, cat: Catalogue, *, verified: bool = True, simulated: bool | None = None) -> dict:
     types = {p.id: p.type for p in design.parts}
     types[BOARD_ID] = design.board
     labels = {p.id: (PRICES.get(p.type, (p.type, 0))[0]) for p in design.parts}
@@ -116,7 +116,9 @@ def build_guide(design: Design, cat: Catalogue, *, verified: bool = True) -> dic
         notes.append("Power the servo from VIN (5 V), not 3V3. A 3.3 V supply will stall it.")
     if any(p.type == "wokwi-pushbutton" for p in design.parts):
         notes.append("The button uses the ESP32's internal pull-up, so it reads LOW when pressed.")
-    if verified:
+    if verified and simulated is False:
+        notes.append("This design passed the free checks (parts, pins, compile, wiring rules) but was NOT run in the simulator, so its behaviour is unverified. Build it as an experiment, not as a known-good design.")
+    elif verified:
         notes.append("This design passed logic and wiring checks in simulation. Current draw and power limits are not simulated; double-check anything that moves or heats.")
     else:
         notes.append("This design did NOT pass verification. It is shown so you can see what was tried; do not build it as is.")

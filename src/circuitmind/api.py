@@ -13,6 +13,10 @@ When Supabase is configured (see auth.py) POST /generate needs a signed-in
 user's token in the Authorization header, each user gets a few runs a day, new
 simulated runs stop when the month's free budget is nearly spent, and every run
 is saved as a row the user can reopen later.
+
+When the simulator has said the month's free minutes are gone (quota.py), new
+jobs run only the free rungs and the reply carries a ``notice`` the web app
+shows; a design that passes them is "unverified", never "verified".
 """
 
 from __future__ import annotations
@@ -31,7 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth
+from . import auth, quota
 from . import catalogue as cat_mod
 from .failure import explain_failure, plain_engine_error
 from .guide import build_guide
@@ -124,13 +128,20 @@ def _run(job_id: str, req: GenerateRequest, user: auth.User | None, design_id: s
             final = res.final
             passed = res.passed
             sim_result: dict[str, Any] | None = None
-            if final:
+            notice = job.get("notice") or ""
+            if res.quota_exhausted:
+                # The simulator refused this job for the month's quota part way through.
+                # The last design passed every free rung: show it as unverified, not failed.
+                passed = True
+                notice = quota.notice(quota.state())
+            elif final:
                 for r in final.outcome.results:
                     if r.rung.value == "simulate":
                         sim_result = {"passed": r.passed, "rung": "simulate", "summary": r.summary, "detail": r.detail}
 
             result: dict[str, Any] = {
                 "passed": passed,
+                "notice": notice,
                 "attempts": [
                     {"n": a.n, "passed": a.passed, "failed_rung": a.failed_rung,
                      "feedback": a.feedback,
@@ -139,7 +150,7 @@ def _run(job_id: str, req: GenerateRequest, user: auth.User | None, design_id: s
                     for a in res.attempts
                 ],
                 "simulation": sim_result,
-                "checks": checks.get(final.n, []) if (final and req.simulate) else [],
+                "checks": checks.get(final.n, []) if (final and sim_result) else [],
                 "model": final.reply.model if final else "",
                 "tokens": dict(zip(("in", "out"), res.tokens())),
             }
@@ -147,7 +158,7 @@ def _run(job_id: str, req: GenerateRequest, user: auth.User | None, design_id: s
                 d = final.design
                 result["design"] = json.loads(d.model_dump_json())
                 result["diagram_json"] = final.outcome.diagram_json
-                result["guide"] = build_guide(d, cat, verified=passed)
+                result["guide"] = build_guide(d, cat, verified=passed, simulated=bool(sim_result))
             if not passed:
                 result["failure"] = explain_failure(res)
             job["result"] = result
@@ -179,7 +190,8 @@ def health() -> dict[str, Any]:
                           "gemini": bool(os.environ.get("GEMINI_API_KEY"))},
             "wokwi": bool(os.environ.get("WOKWI_CLI_TOKEN")),
             "auth": auth.enabled(), "runs_per_day": auth.DAILY_RUN_CAP,
-            "budget": auth.budget_status()}
+            "budget": auth.budget_status(),
+            "quota": quota.state()}
 
 
 @app.get("/catalogue")
@@ -202,6 +214,13 @@ def generate(req: GenerateRequest, authorization: str | None = Header(default=No
         return {"refused": message(refusal), "topic": refusal.topic, "closest": refusal.closest}
     if req.simulate and not os.environ.get("WOKWI_CLI_TOKEN"):
         raise HTTPException(400, "WOKWI_CLI_TOKEN is not set on the server")
+    notice = ""
+    qs = quota.state()
+    if req.simulate and qs["exhausted"]:
+        # The last simulation this month was refused for quota: run the free rungs
+        # only, say so, and never call it verified.
+        req = req.model_copy(update={"simulate": False})
+        notice = qs["notice"]
 
     user: auth.User | None = None
     design_id: str | None = None
@@ -221,9 +240,9 @@ def generate(req: GenerateRequest, authorization: str | None = Header(default=No
     job_id = uuid.uuid4().hex[:12]
     with _lock:
         _jobs[job_id] = {"id": job_id, "status": "queued", "prompt": req.prompt, "started": time.time(),
-                         "events": [], "subscribers": [], "result": None, "error": None}
+                         "events": [], "subscribers": [], "result": None, "error": None, "notice": notice}
     threading.Thread(target=_run, args=(job_id, req, user, design_id), daemon=True).start()
-    return {"job_id": job_id, "design_id": design_id}
+    return {"job_id": job_id, "design_id": design_id, "simulate": req.simulate, "notice": notice}
 
 
 @app.get("/jobs/{job_id}")

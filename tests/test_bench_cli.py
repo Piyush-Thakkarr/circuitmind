@@ -66,3 +66,55 @@ def test_bench_merge_needs_only_and_an_existing_file(tmp_path, monkeypatch):
     d = json.loads((tmp_path / "A_t.json").read_text())
     assert d["tasks"] == 2 and d["passed"] == 2
     assert d["redone"][0]["tasks"] == ["T01_blink"]
+
+
+def test_bench_stops_the_sweep_when_the_simulator_quota_is_used_up(tmp_path, monkeypatch):
+    from circuitmind import quota
+    from circuitmind.bench import not_run_result
+
+    monkeypatch.setenv("WOKWI_CLI_TOKEN", "x")
+    monkeypatch.setenv("CIRCUITMIND_QUOTA_FILE", str(tmp_path / "q.json"))
+    monkeypatch.setattr("circuitmind.cli.get_provider", lambda name: _Prov())
+    calls: list[str] = []
+
+    def run_task(config, task, tdir, provider, cat, workdir, on_event=None):
+        calls.append(task["id"])
+        if len(calls) == 1:
+            return TaskResult(task_id=task["id"], passed=True, attempts=1, failed_rung="", tokens_in=1,
+                              tokens_out=1, sim_ms=5000, seconds=0.1, passed_attempt=1)
+        quota.mark_exhausted("API Error: You have used up your Free plan monthly CI minute quota.")
+        return not_run_result(task["id"], attempts=1)
+
+    monkeypatch.setattr(bench_mod, "run_task", run_task)
+    res = CliRunner().invoke(app, ["bench", "A", "--provider", "fake", "--yes", "--results", str(tmp_path),
+                                   "--label", "t", "--only", "T01_blink,T02_button_serial,T03_servo_sweep"])
+    assert res.exit_code == 0, res.output
+    assert calls == ["T01_blink", "T02_button_serial"]  # the third task was never started
+    out = _plain(res.output)
+    assert "NOT RUN (quota)" in out
+    assert "pass@1 1/1, pass@3 1/1" in out
+    assert "2 task(s) not run (quota): T02_button_serial, T03_servo_sweep" in out
+    assert "--only T02_button_serial,T03_servo_sweep --merge" in out
+    d = json.loads((tmp_path / "A_t.json").read_text())
+    assert d["tasks"] == 1 and d["passed"] == 1
+    assert d["not_run"] == ["T02_button_serial", "T03_servo_sweep"]
+    assert [r["failed_rung"] for r in d["rows"]] == ["", "quota", "quota"]
+
+
+def test_bench_does_not_start_while_the_quota_is_known_to_be_used_up(tmp_path, monkeypatch):
+    from circuitmind import quota
+
+    monkeypatch.setenv("WOKWI_CLI_TOKEN", "x")
+    monkeypatch.setenv("CIRCUITMIND_QUOTA_FILE", str(tmp_path / "q.json"))
+    monkeypatch.setattr("circuitmind.cli.get_provider", lambda name: _Prov())
+    quota.mark_exhausted("API Error: You have used up your Free plan monthly CI minute quota.")
+
+    def run_task(*a, **k):
+        raise AssertionError("no task may run")
+
+    monkeypatch.setattr(bench_mod, "run_task", run_task)
+    res = CliRunner().invoke(app, ["bench", "D", "--provider", "fake", "--yes", "--results", str(tmp_path),
+                                   "--label", "t", "--only", "T01_blink"])
+    assert res.exit_code == 2
+    assert "not started" in res.output and "Nothing was run or spent" in res.output
+    assert not (tmp_path / "D_t.json").exists()

@@ -185,12 +185,14 @@ def bench(
                                "results file in place of the old ones (repairing tasks that hit an engine error)."),
 ) -> None:
     """Run one benchmark configuration across the task suite. Prints the cost first and asks."""
+    from . import quota
     from .bench import (
         CONFIGS,
         TaskResult,
         estimate_sim_ms,
         load_tasks,
         merge_results,
+        not_run_result,
         results_path,
         run_task,
         summary_table,
@@ -206,6 +208,12 @@ def bench(
         raise typer.BadParameter("bench needs WOKWI_CLI_TOKEN; every config simulates at least once per task")
     if merge and (not only or not results_path(results_dir, config, label).exists()):
         raise typer.BadParameter("--merge needs --only and an existing results file for this config and label")
+    qs = quota.state()
+    if qs["exhausted"]:
+        typer.echo(f"not started: the Wokwi free plan's simulation minutes for this month are used up "
+                   f"(last seen {qs['since']}, expected back {qs['resets']}). Nothing was run or spent. "
+                   "Check https://wokwi.com/dashboard/ci; the engine forgets this state on the reset date.")
+        raise typer.Exit(2)
     os.environ["CIRCUITMIND_WAIT_FOR_QUOTA"] = "1"  # a sweep waits out the daily token window; the web app never does
     cat = cat_mod.load()
     prov = get_provider(provider)
@@ -241,19 +249,28 @@ def bench(
             r = TaskResult(task_id=t["id"], passed=False, attempts=0, failed_rung="error",
                            tokens_in=0, tokens_out=0, sim_ms=0, seconds=0.0)
             marks.append(f"error: {str(e)[:80]}")
-        typer.echo(f"  {'PASS' if r.passed else 'FAIL':4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
+        mark = "NOT RUN (quota)" if r.not_run else ("PASS" if r.passed else "FAIL")
+        typer.echo(f"  {mark:4}  attempts={r.attempts}  [{' > '.join(marks)}]  "
                    f"{r.seconds:4.0f}s  sim {r.sim_ms/1000:.0f}s")
         return r
 
     rows: dict[str, TaskResult] = {}
-    for t, tdir in tasks:
+    stopped_by_quota = False
+    for i, (t, tdir) in enumerate(tasks):
         rows[t["id"]] = run_one(t, tdir, RUNS / "bench" / stamp / config / t["id"])
+        if rows[t["id"]].not_run:
+            # The simulator refused for the month's quota. Every later task would be
+            # refused too, so the sweep stops here and the rest are written as not run.
+            stopped_by_quota = True
+            for t2, _ in tasks[i + 1:]:
+                rows[t2["id"]] = not_run_result(t2["id"])
+            break
 
     # A task that ended with rung "error" never reached the model or the checks (the
     # model service failed, usually a quota the wait could not sit out). That says
     # nothing about the design, so each such task gets one more go before the file is written.
     errored = [(t, tdir) for t, tdir in tasks if rows[t["id"]].failed_rung == "error"]
-    if errored:
+    if errored and not stopped_by_quota:
         typer.echo("")
         typer.echo(f"{len(errored)} task(s) hit an engine error, not a model failure; running them once more")
         for t, tdir in errored:
@@ -265,9 +282,16 @@ def bench(
     else:
         p = write_results(results_dir, config, getattr(prov, "model", prov.name), cat.hash, row_list, label=label)
     typer.echo("")
-    n = len(row_list)
-    at1 = sum(1 for r in row_list if r.passed and r.passed_attempt == 1)
-    typer.echo(f"pass@1 {at1}/{n}, pass@3 {sum(r.passed for r in row_list)}/{n}. wrote {p}")
+    ran = [r for r in row_list if not r.not_run]
+    n = len(ran)
+    at1 = sum(1 for r in ran if r.passed and r.passed_attempt == 1)
+    typer.echo(f"pass@1 {at1}/{n}, pass@3 {sum(r.passed for r in ran)}/{n}. wrote {p}")
+    not_run = [r.task_id for r in row_list if r.not_run]
+    if not_run:
+        qs = quota.state()
+        typer.echo(f"sweep stopped: the Wokwi free plan's simulation minutes for this month are used up "
+                   f"(expected back {qs.get('resets') or 'next month'}). {len(not_run)} task(s) not run (quota): "
+                   f"{', '.join(not_run)}. After the reset, run them with --only {','.join(not_run)} --merge")
     still = [r.task_id for r in row_list if r.failed_rung == "error"]
     if still:
         typer.echo(f"still an engine error, not counted as a model result: {', '.join(still)}. "

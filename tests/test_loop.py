@@ -97,3 +97,31 @@ def test_bad_pin_then_fixed_passes_free_rungs(tmp_path):
     summary = json.loads((Path(tmp_path) / "summary.json").read_text())
     assert summary["passed"] is True and summary["attempts"][0]["failed_rung"] == "lint"
     assert res.passed_attempt == 2 and summary["passed_attempt"] == 2
+
+
+def test_quota_refusal_stops_the_loop_without_another_model_call(tmp_path, monkeypatch):
+    from circuitmind import loop as loop_mod
+    from circuitmind.harness.ladder import LadderOutcome
+    from circuitmind.harness.types import Rung, RungResult
+
+    monkeypatch.setenv("CIRCUITMIND_QUOTA_FILE", str(tmp_path / "q.json"))
+
+    def fake_ladder(design, cat, workdir, **kw):
+        out = LadderOutcome()
+        for rung in (Rung.SCHEMA, Rung.LINT, Rung.COMPILE, Rung.CONSISTENCY, Rung.ELECTRICAL):
+            out.results.append(RungResult(rung=rung, passed=True))
+        out.results.append(RungResult(rung=Rung.SIMULATE, passed=False, summary="not simulated: quota",
+                                      extra={"quota_exhausted": True, "sim_ms_charged": 0}))
+        return out
+
+    monkeypatch.setattr(loop_mod, "run_ladder", fake_ladder)
+    prov = MockProvider([GOOD, GOOD, GOOD])
+    events = []
+    res = run_generation("blink", prov, CAT, tmp_path, max_attempts=3, simulate=True,
+                         scenario=tmp_path / "scenario.yaml", on_event=lambda k, p: events.append(k))
+    assert len(res.attempts) == 1  # the model was asked once, not three times
+    assert not res.passed and res.quota_exhausted
+    assert res.attempts[0].failed_rung == "simulate"
+    assert res.attempts[0].outcome.quota_exhausted
+    assert "quota" in events
+    assert json.loads((tmp_path / "summary.json").read_text())["quota_exhausted"] is True

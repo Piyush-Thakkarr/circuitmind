@@ -50,9 +50,10 @@
     }
     var g=res.guide, d=res.design;
     var simulated=!!res.simulation;
-    var label = simulated ? 'Verified in simulation' : 'Passed the free checks, not simulated';
+    var label = simulated ? 'Verified in simulation' : 'Unverified: passed the free checks, not simulated';
     var meta = (res.model||'') + (res.tokens ? ' · '+res.tokens.in+' in / '+res.tokens.out+' out' : '');
-    var html='<div class="verdict ok">'+label+'<small>'+esc(meta)+'</small></div>';
+    var html='<div class="verdict '+(simulated ? 'ok' : 'warn')+'">'+label+'<small>'+esc(meta)+'</small></div>';
+    if (res.notice) html+='<p class="notice">'+esc(res.notice)+'</p>';
     if (simulated && res.checks && res.checks.length){
       html+='<div class="sec"><h3>What the simulator checked</h3><ul class="notes">'+res.checks.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+
         '</ul><p style="color:var(--ink3);font-size:13px;margin:6px 0 0">Nothing beyond this list was tested. Timing, brightness and anything the prompt implied but did not state were not checked.</p></div>';
@@ -81,6 +82,7 @@
     return {
       passed: row.status === 'verified' || row.status === 'free_checks',
       simulation: row.status === 'verified' ? {passed:true} : null,
+      notice: row.status === 'free_checks' ? 'This design was not run in the simulator.' : '',
       guide: row.guide, design: row.design, diagram_json: row.diagram,
       checks: row.checks || [], model: row.model || '', tokens: null,
       attempts: row.attempts, failure: row.failure
