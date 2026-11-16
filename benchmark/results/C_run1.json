@@ -2,16 +2,16 @@
   "config": "C",
   "model": "openai/gpt-oss-120b",
   "catalogue": "2c493f57610f32e2",
-  "when": "2026-11-15 13:56:36",
+  "when": "2026-11-16 13:35:52",
   "tasks": 25,
-  "passed": 22,
-  "pass_rate": 0.88,
-  "pass_at_1": 19,
-  "pass_at_3": 22,
-  "mean_attempts_on_pass": 1.14,
-  "sim_ms_total": 144000,
-  "tokens_in": 66781,
-  "tokens_out": 32666,
+  "passed": 23,
+  "pass_rate": 0.92,
+  "pass_at_1": 20,
+  "pass_at_3": 23,
+  "mean_attempts_on_pass": 1.13,
+  "sim_ms_total": 158000,
+  "tokens_in": 71814,
+  "tokens_out": 35522,
   "rows": [
     {
       "task_id": "T01_blink",
@@ -114,14 +114,14 @@
     },
     {
       "task_id": "T10_two_button_counter",
-      "passed": false,
-      "attempts": 0,
-      "failed_rung": "error",
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "sim_ms": 0,
-      "seconds": 0.0,
-      "passed_attempt": null
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2485,
+      "tokens_out": 1163,
+      "sim_ms": 6000,
+      "seconds": 41.89072608947754,
+      "passed_attempt": 1
     },
     {
       "task_id": "T11_traffic_light",
@@ -203,12 +203,12 @@
     {
       "task_id": "T18_heater_control",
       "passed": false,
-      "attempts": 0,
-      "failed_rung": "error",
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "sim_ms": 0,
-      "seconds": 0.0,
+      "attempts": 1,
+      "failed_rung": "simulate",
+      "tokens_in": 2548,
+      "tokens_out": 1693,
+      "sim_ms": 8000,
+      "seconds": 51.03276205062866,
       "passed_attempt": null
     },
     {
@@ -289,5 +289,15 @@
       "passed_attempt": 1
     }
   ],
-  "label": "run1"
+  "label": "run1",
+  "first_written": "2026-11-15 13:56:36",
+  "redone": [
+    {
+      "when": "2026-11-16 13:35:52",
+      "tasks": [
+        "T10_two_button_counter",
+        "T18_heater_control"
+      ]
+    }
+  ]
 }

@@ -3,6 +3,7 @@
 import json
 
 from circuitmind.report import (
+    add_final_sim_failures,
     classify_feedback,
     failure_categories,
     load_runs,
@@ -57,3 +58,15 @@ def test_failure_categories_count_failed_attempts_per_config(tmp_path):
     cats = failure_categories([tmp_path])
     assert cats["D"]["library or compile error"] == 1
     assert sum(cats["D"].values()) == 1
+
+
+def test_final_simulation_failures_of_one_shot_versions_are_counted(tmp_path):
+    (tmp_path / "B_run1.json").write_text(json.dumps(_data("B", "run1", [
+        _row("T01", False, 1, "simulate"), _row("T02", True, 1), _row("T03", False, 1, "electrical")])))
+    (tmp_path / "D_run1.json").write_text(json.dumps(_data("D", "run1", [_row("T01", False, 3, "simulate")])))
+    runs = load_runs(tmp_path)
+    cats = add_final_sim_failures({}, runs)
+    assert cats["B"]["logic error caught only by simulation"] == 1
+    assert not cats["D"]  # D's simulation failures come from its feedback files
+    out = render(tmp_path, [tmp_path])
+    assert "| logic error caught only by simulation | 1 | 0 |" in out

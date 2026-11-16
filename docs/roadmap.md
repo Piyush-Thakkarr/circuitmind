@@ -46,14 +46,15 @@ The frontend is already deployed on Vercel. The gap is the engine, which runs on
 ## 3. Benchmark runs
 - Budget first: 50 simulated minutes a month on the free tier. Check https://wokwi.com/dashboard/ci before each sweep. The 5-task pilot used about 75 simulated seconds for all four configs; 25 tasks is roughly 6 to 7 minutes per full sweep.
 - [x] Add `--yes` and a printed cost estimate to `circuitmind bench`; it asks before spending. Also `--label run1` so results land in `A_run1.json` and the summary table shows one row per run.
-- [ ] Run A, B, C, D once on all 25 with Groq. Save as results/<config>_run1.json. Groq's 200K tokens a day fit A and B on one day, C on the next, D on the third (found 14 Nov; the first A and B, run before two harness normalisations, are kept under results/run0_before_normalisation and not reported). C and D done 15 Nov (C 22 of 25, D 23 of 25 before repair); four of their rows were Groq quota errors, not model failures, and are rerun with `--only ... --merge` once A and B finish. The 5-task pilot files moved to results/pilot_5_tasks.
+- [x] Run A, B, C, D once on all 25 with Groq. Save as results/<config>_run1.json. Groq's 200K tokens a day fit A and B on one day, C on the next, D on the third (found 14 Nov; the first A and B, run before two harness normalisations, are kept under results/run0_before_normalisation and not reported). Done 15 and 16 Nov 2026: A 0, B 20, C 23, D 25 of 25 on pass@3 (pass@1: 0, 20, 20, 23). Four C and D rows were Groq quota errors and one B row a simulator flake (empty serial log); each was redone with `--only ... --merge`, recorded in the file. The 5-task pilot files moved to results/pilot_5_tasks.
 - [ ] Repeat twice more on different days (run2, run3). Results are reported as min to max across runs.
 - [ ] One sweep of D with Gemini if budget allows (20 requests a day on the free tier, so it takes days).
 
 ## 4. Results write-up
-- [ ] benchmark/results/README.md: table with pass@1 and pass@3 per config, min to max over three runs; per-task matrix (which tasks fail where, at which rung); failure categories (invented pin, wrong GPIO, missing resistor, electrical rule, library error, logic error caught only by simulation); what feedback fixed and what it did not.
-- [ ] README status table updated to the 25-task numbers. Plain-language reading of the result, same style as "Does the checking actually help?".
-- [ ] One page for the project review: problem, approach, the table, the honest limits.
+- [x] benchmark/results/README.md: table with pass@1 and pass@3 per config, min to max over three runs; per-task matrix (which tasks fail where, at which rung); failure categories (invented pin, wrong GPIO, missing resistor, electrical rule, library error, logic error caught only by simulation); what feedback fixed and what it did not. Written 16 Nov 2026 from run 1; the ranges fill in as runs 2 and 3 land (`circuitmind report`).
+- [x] README status table updated to the 25-task numbers. Plain-language reading of the result, same style as "Does the checking actually help?".
+- [x] One page for the project review: problem, approach, the table, the honest limits. docs/review.md.
+- [ ] Follow-up found in run 1: a scenario pin check assumes the LED's polarity (C T18 lit the LED active-low and was marked a fail). Let scenarios say "led1 on" and have the adapter derive the GPIO level from the wiring; and treat a simulation with an empty serial log (no ROM banner) as a flake to retry.
 
 ## 5. Towards an electronics engine of our own
 Only after sections 0 to 4 are closed.
