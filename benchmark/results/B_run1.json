@@ -1,0 +1,302 @@
+{
+  "config": "B",
+  "model": "openai/gpt-oss-120b",
+  "catalogue": "2c493f57610f32e2",
+  "when": "2026-11-16 14:18:29",
+  "tasks": 25,
+  "passed": 20,
+  "pass_rate": 0.8,
+  "pass_at_1": 20,
+  "pass_at_3": 20,
+  "mean_attempts_on_pass": 1.0,
+  "sim_ms_total": 155000,
+  "tokens_in": 62438,
+  "tokens_out": 34786,
+  "rows": [
+    {
+      "task_id": "T01_blink",
+      "passed": false,
+      "attempts": 1,
+      "failed_rung": "simulate",
+      "tokens_in": 2478,
+      "tokens_out": 1071,
+      "sim_ms": 5000,
+      "seconds": 1401.0095601081848,
+      "passed_attempt": null
+    },
+    {
+      "task_id": "T02_button_serial",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2470,
+      "tokens_out": 691,
+      "sim_ms": 6000,
+      "seconds": 1505.6588459014893,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T03_servo_sweep",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2469,
+      "tokens_out": 749,
+      "sim_ms": 8000,
+      "seconds": 1233.9226441383362,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T04_ultrasonic_distance",
+      "passed": false,
+      "attempts": 1,
+      "failed_rung": "electrical",
+      "tokens_in": 2473,
+      "tokens_out": 1054,
+      "sim_ms": 0,
+      "seconds": 1372.141448020935,
+      "passed_attempt": null
+    },
+    {
+      "task_id": "T05_rgb_cycle",
+      "passed": false,
+      "attempts": 1,
+      "failed_rung": "simulate",
+      "tokens_in": 2497,
+      "tokens_out": 1845,
+      "sim_ms": 5000,
+      "seconds": 1561.178171157837,
+      "passed_attempt": null
+    },
+    {
+      "task_id": "T06_potentiometer_read",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2469,
+      "tokens_out": 870,
+      "sim_ms": 5000,
+      "seconds": 1322.5502169132233,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T07_button_buzzer",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2489,
+      "tokens_out": 1088,
+      "sim_ms": 6000,
+      "seconds": 1266.6262011528015,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T08_dht22_temperature",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2471,
+      "tokens_out": 793,
+      "sim_ms": 8000,
+      "seconds": 1547.071532011032,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T09_lcd_hello",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2478,
+      "tokens_out": 1087,
+      "sim_ms": 5000,
+      "seconds": 1328.7193253040314,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T10_two_button_counter",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2485,
+      "tokens_out": 1324,
+      "sim_ms": 6000,
+      "seconds": 1369.8060321807861,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T11_traffic_light",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2506,
+      "tokens_out": 1653,
+      "sim_ms": 6000,
+      "seconds": 1296.2823131084442,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T12_button_toggle_led",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2494,
+      "tokens_out": 1175,
+      "sim_ms": 6000,
+      "seconds": 1289.8714621067047,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T13_led_fade",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2484,
+      "tokens_out": 1111,
+      "sim_ms": 6000,
+      "seconds": 1592.9019730091095,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T14_distance_alarm",
+      "passed": false,
+      "attempts": 1,
+      "failed_rung": "electrical",
+      "tokens_in": 2496,
+      "tokens_out": 1201,
+      "sim_ms": 0,
+      "seconds": 1218.6522102355957,
+      "passed_attempt": null
+    },
+    {
+      "task_id": "T15_pot_servo",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2492,
+      "tokens_out": 1367,
+      "sim_ms": 5000,
+      "seconds": 1285.8180911540985,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T16_slide_switch",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2562,
+      "tokens_out": 1504,
+      "sim_ms": 5000,
+      "seconds": 1305.752545118332,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T17_light_switch",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2541,
+      "tokens_out": 2462,
+      "sim_ms": 6000,
+      "seconds": 1757.6269659996033,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T18_heater_control",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2548,
+      "tokens_out": 2251,
+      "sim_ms": 8000,
+      "seconds": 1295.5773258209229,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T19_seven_segment_count",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2545,
+      "tokens_out": 2984,
+      "sim_ms": 6000,
+      "seconds": 1250.9631841182709,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T20_relay_blink",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2538,
+      "tokens_out": 1352,
+      "sim_ms": 5000,
+      "seconds": 1263.4737448692322,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T21_temp_and_light",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2481,
+      "tokens_out": 1162,
+      "sim_ms": 8000,
+      "seconds": 1232.6843750476837,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T22_temp_lcd",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2486,
+      "tokens_out": 1551,
+      "sim_ms": 8000,
+      "seconds": 1156.4844689369202,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T23_joystick_servo",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2503,
+      "tokens_out": 1418,
+      "sim_ms": 8000,
+      "seconds": 1227.0844559669495,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T24_tilt_alarm",
+      "passed": true,
+      "attempts": 1,
+      "failed_rung": "",
+      "tokens_in": 2505,
+      "tokens_out": 1572,
+      "sim_ms": 8000,
+      "seconds": 1706.9487121105194,
+      "passed_attempt": 1
+    },
+    {
+      "task_id": "T25_stepper_turn",
+      "passed": false,
+      "attempts": 1,
+      "failed_rung": "simulate",
+      "tokens_in": 2478,
+      "tokens_out": 1451,
+      "sim_ms": 16000,
+      "seconds": 1213.677167892456,
+      "passed_attempt": null
+    }
+  ],
+  "label": "run1",
+  "first_written": "2026-11-16 13:33:30",
+  "redone": [
+    {
+      "when": "2026-11-16 14:18:29",
+      "tasks": [
+        "T25_stepper_turn"
+      ]
+    }
+  ]
+}

@@ -369,3 +369,26 @@ file, and `circuitmind bench C --only T10_two_button_counter --label run1 --merg
 later and puts its row into the existing file, recording which tasks were redone and when. The
 pilot's five-task files moved to benchmark/results/pilot_5_tasks so the report command, which
 reads every file in the results folder, only sees 25-task runs.
+
+**Run 1 on 25 tasks: A 0, B 20, C 23, D 25 of 25 on pass@3; the table in benchmark/results/README.md
+is the reference.** Model openai/gpt-oss-120b on Groq, 15 and 16 Nov 2026, catalogue 2c493f57610f32e2.
+A failed every task at schema or lint (invented part types and pin names) and never reached the
+simulator. B's failures were two HC-SR04s on 3V3 (electrical rung) and sketches that stopped after the
+status line. C fixed every free-check failure on the second attempt. The results files record the
+tasks that were redone after service failures (`redone`). pass@3 compares one attempt against three,
+and the write-up says so next to every table.
+
+**A GPIO pin check assumes the LED's polarity; a design that lights the LED the other way round fails
+it.** In the C repair on 16 Nov, T18's design put the LED's anode on 3V3 and its cathode through the
+resistor to D2, and the firmware drove D2 LOW to turn it on. That LED lights on a desk. The scenario
+expects D2 high while HEATING, so the harness called it a fail, and the table reports what the harness
+said. The honest reading: this one failure is the checker's assumption, not the model's mistake. Fix
+for later (roadmap section 4 follow-up): let a scenario say "led1 on" and have the adapter work out
+the GPIO level from the wiring. Until then the task prompts could state "anode side on the GPIO".
+
+**A simulation that ends with an empty serial log, not even the boot banner, is a simulator flake.**
+B's T25 on 16 Nov was written down as a failure after two runs with zero serial output; the same
+compiled binary and diagram passed with wokwi-cli by hand ten minutes later (DONE printed, scenario
+completed). The task was redone with `--only T25_stepper_turn --merge` like the quota errors. Every
+real run of an ESP32 in Wokwi prints the "ets Jul 29 2019" ROM banner first, so an empty log means the
+chip never ran; the harness could treat that as a flake and retry, which it does not yet.

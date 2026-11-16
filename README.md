@@ -28,22 +28,22 @@ The first five checks are free and run on your machine in a few seconds. Only th
 
 ## Does the checking actually help?
 
-That is the research question of the project. Five tasks were run through four versions of the system:
+That is the research question of the project. Twenty-five tasks (LEDs, buttons, buzzers, servos, a stepper, distance and temperature sensors, LDR, joystick, MPU6050, LCD, 7-segment, relay) were run through four versions of the system, each task with a scenario that drives the inputs and checks the pins:
 
-| Version | What it has | pass@1 (of 5) | pass@3 (of 5) |
+| Version | What it has | pass@1 (of 25) | pass@3 (of 25) |
 |---|---|---|---|
-| A | bare model | 1 | 1 |
-| B | + parts catalogue in the prompt | 3 | 3 |
-| C | + retry on schema, lint, compile, consistency errors | 2 | 3 |
-| D | + retry on simulation errors too | 3 | 5 |
+| A | bare model | 0 | 0 |
+| B | + parts catalogue in the prompt | 20 | 20 |
+| C | + retry on schema, lint, compile, consistency, electrical errors | 20 | 23 |
+| D | + retry on simulation errors too | 23 | 25 |
 
-pass@1 counts tasks whose first design passed every check. pass@3 counts a pass on any attempt the version allows, up to three. A and B get one attempt, so their two columns are the same. Comparing A's single shot with D's three on pass@3 alone is not fair: part of D's gain is simply more tries. B, C and D send the same first prompt, so their pass@1 numbers (3, 2, 3) should be equal and the spread is sampling noise, which is why repeated runs are planned.
+pass@1 counts tasks whose first design passed every check including the simulation. pass@3 counts a pass on any attempt the version allows, up to three. A and B get one attempt, so their two columns are the same. Comparing A's single shot with D's three on pass@3 alone is not fair: part of D's gain is simply more tries. B, C and D send the same first prompt, so their pass@1 numbers should be equal and the spread between them is sampling noise, which is why repeated runs are planned.
 
-Model: `openai/gpt-oss-120b` on Groq's free tier. Full table, per-task results and caveats in [`benchmark/results/README.md`](benchmark/results/README.md).
+Model: `openai/gpt-oss-120b` on Groq's free tier, run 1 on 15 and 16 Nov 2026. Full table, per-task results, failure categories and caveats in [`benchmark/results/README.md`](benchmark/results/README.md).
 
-What the table says: without the catalogue, the model invents pin names (A). Telling it the real parts and pins fixes most of that (B). Retrying on compile errors alone did not add anything here, because the one wrong design in C passed every static check and only failed when it actually ran (C). Retrying on what the simulator saw caught it (D).
+What the table says: without the catalogue the model invents part types and pin names, and not one of its 25 designs even loaded in the simulator (A). Telling it the real parts and pins is the biggest single step (B). Feeding compile and electrical errors back fixes exactly the mistakes those checks catch: a 5 V sensor on the 3.3 V rail, a library call the current ESP32 core removed, a stray escaped quote (C). What the free checks cannot see is what the sketch does over time; in run 1 one design cycled an RGB LED correctly and then switched it off for a second nobody asked for, and only the simulation caught it (C fails there, D can retry on it).
 
-Five tasks is a pilot. The plan is 25 tasks and repeated runs.
+One run so far. Two more on other days will turn the numbers into ranges.
 
 ## Architecture
 
@@ -99,7 +99,7 @@ Inside Wokwi (the dashed box), a virtual ESP32 boots the binary, the parts in th
 
 On a fail, the feedback is the name of the check that failed, a one-line summary, and the last 20 lines of serial output. That text plus the previous design goes back to the model as attempt n+1, up to three.
 
-The dashed "costs budget" marking matters: a full run of all five tasks through all four versions used about 75 simulated seconds out of the 50 free minutes a month.
+The dashed "costs budget" marking matters: one sweep of all 25 tasks through one version uses about 2.5 simulated minutes (144 simulated seconds for C and for D in run 1) out of the 50 free minutes a month, so a full run of the four versions is about 7 minutes of budget.
 
 ## Repository layout
 
@@ -176,7 +176,7 @@ CI runs unit tests and lint only. It never runs a simulation.
 
 ## What is not done yet
 
-- The benchmark is 5 tasks. It needs 25 and repeated runs before the numbers mean much.
+- The benchmark has been run once on the 25 tasks. Two more runs on other days are needed before the numbers are ranges rather than single values.
 - The engine runs on a laptop, not a server, so the live workspace is up only when the laptop is.
 - The simulator checks logic and wiring. It does not check current draw or power limits, and the guide says so.
 - The system is ESP32 DevKit v1 only.

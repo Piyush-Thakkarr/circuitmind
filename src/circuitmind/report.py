@@ -14,7 +14,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from .bench import _pass_at_1, result_files
+from .bench import CONFIGS, _pass_at_1, result_files
 
 CONFIG_WORDS = {
     "A": "bare model",
@@ -118,6 +118,24 @@ def failure_categories(run_dirs: list[Path]) -> dict[str, Counter]:
     return out
 
 
+def add_final_sim_failures(cats: dict[str, Counter], runs: dict[str, list[dict]]) -> dict[str, Counter]:
+    """Count the final-simulation failures of A, B and C, which leave no feedback file.
+
+    Those versions simulate the finished design once, outside the loop, so a
+    design that fails there has no attempt feedback to classify; the results
+    row says ``failed_rung: simulate``. D's simulation failures happen inside
+    the loop and are already counted from their feedback files.
+    """
+    for c, datas in runs.items():
+        cats.setdefault(c, Counter())  # every version gets a column, even one with no failures
+        if CONFIGS[c]["sim_in_loop"]:
+            continue
+        n = sum(1 for d in datas for r in d["rows"] if not r.get("passed") and r.get("failed_rung") == "simulate")
+        if n:
+            cats[c]["logic error caught only by simulation"] += n
+    return cats
+
+
 def failure_table(cats: dict[str, Counter]) -> str:
     names = [n for n, _ in _CATEGORIES] + ["other"]
     configs = list(cats)
@@ -140,9 +158,10 @@ def render(results_dir: Path, run_dirs: list[Path] | None = None) -> str:
              "## Per task", "", per_task_table(runs), "",
              "Numbers in brackets are attempts used. Several runs are separated by a slash, in run order."]
     if run_dirs:
-        cats = failure_categories(run_dirs)
+        cats = add_final_sim_failures(failure_categories(run_dirs), runs)
         if cats:
             how = ("Counted over every failed attempt in the run folders given, by the first thing the "
-                   "feedback names. One task can appear up to three times in C and D.")
+                   "feedback names, plus the final-simulation failures of A, B and C from the results files. "
+                   "One task can appear up to three times in C and D.")
             parts += ["", "## Why attempts failed", "", failure_table(cats), "", how]
     return "\n".join(parts) + "\n"
