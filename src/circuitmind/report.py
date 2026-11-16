@@ -77,6 +77,8 @@ def _cell(row: dict) -> str:
         a = row.get("attempts") or 1
         return "pass" if a == 1 else f"pass ({a})"
     rung = row.get("failed_rung") or "?"
+    if rung == "quota":
+        return "not run (quota)"
     a = row.get("attempts") or 0
     return f"fail at {rung}" + (f" ({a})" if a > 1 else "")
 

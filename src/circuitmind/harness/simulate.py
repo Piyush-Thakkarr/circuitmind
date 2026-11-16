@@ -4,6 +4,11 @@ Verdict is the exit code. 0 pass, 42 timeout, anything else failure. The
 serial log is captured for feedback and humans, never for the verdict.
 One automatic retry on timeout, and one when the cloud connection dropped
 before the sketch ran; both flagged as a possible flake.
+
+One reply is neither pass nor failure: Wokwi refusing to run because the
+month's free minutes are gone. That comes back as a failed rung with
+``extra["quota_exhausted"]`` True, nothing charged, and the state is remembered
+(see quota.py) so the loop, the bench and the web engine can act on it.
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ import subprocess
 import time
 from pathlib import Path
 
+from .. import quota
 from .types import Rung, RungResult
 
 TIMEOUT_EXIT = 42
@@ -96,6 +102,18 @@ def run_simulate(
         )
 
     rc, serial, secs = _once(project_dir, scenario, timeout_ms)
+    if rc != 0 and quota.exhausted_reply(serial):
+        st = quota.mark_exhausted(serial.strip().splitlines()[-1] if serial.strip() else "")
+        return RungResult(
+            rung=Rung.SIMULATE,
+            passed=False,
+            summary="not simulated: the month's free simulation minutes are used up",
+            detail=f"Wokwi refused to run: {st['message']}\nThe quota is expected back on {st['resets']}. "
+                   "This is not a fault in the design.",
+            seconds=secs,
+            extra={"returncode": rc, "flake_retry": False, "sim_ms_charged": 0, "quota_exhausted": True},
+        )
+    quota.mark_ok()
     flake = False
     if rc == TIMEOUT_EXIT and retry_on_timeout:
         rc2, serial2, secs2 = _once(project_dir, scenario, timeout_ms)

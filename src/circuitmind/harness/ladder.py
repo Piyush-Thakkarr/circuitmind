@@ -34,6 +34,12 @@ class LadderOutcome:
                 return r.rung
         return None
 
+    @property
+    def quota_exhausted(self) -> bool:
+        """The simulator refused for the month's quota. The ladder stops at the first
+        failure, so when this is True every free rung before simulation passed."""
+        return any(r.extra.get("quota_exhausted") for r in self.results)
+
     def feedback(self) -> str:
         return "\n".join(r.feedback() for r in self.results)
 

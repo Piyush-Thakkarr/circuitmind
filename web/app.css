@@ -72,6 +72,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3vw,34px);lin
 .verdict{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:10px;margin-bottom:16px;font-weight:600}
 .verdict.ok{background:var(--signal-dim);color:var(--signal)}
 .verdict.no{background:var(--fail-dim);color:var(--fail)}
+.verdict.warn{background:rgba(245,158,11,.12);color:#F2B544}
+.notice{color:#F2B544;border:1px solid rgba(245,158,11,.35);border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:13px}
+.quota .warn{color:#F2B544}
 .verdict small{font-weight:400;color:var(--ink2);font-family:var(--mono);font-size:12px;margin-left:auto}
 .sec{margin-top:18px}
 .sec h3{font-size:14px;font-weight:600;margin:0 0 8px;color:var(--ink2);letter-spacing:.02em}

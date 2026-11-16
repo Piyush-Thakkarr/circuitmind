@@ -72,3 +72,23 @@ def test_merge_results_replaces_rows_and_records_what_was_redone(tmp_path):
     assert d["label"] == "run1" and d["first_written"]
     assert d["redone"] == [{"when": d["when"], "tasks": ["T2"]}]
     assert "| C run1 | 3 | 1/3 | 2/3 |" in summary_table(tmp_path)
+
+
+def test_not_run_rows_are_left_out_of_the_totals_and_named_in_the_table(tmp_path):
+    from circuitmind.bench import not_run_result
+    from circuitmind.report import _cell
+
+    rows = [_row("T1", True, 1, 1), not_run_result("T2", attempts=1, tokens_in=7, tokens_out=3), not_run_result("T3")]
+    p = write_results(tmp_path, "C", "model", "hash", rows, label="run2")
+    d = json.loads(p.read_text())
+    assert d["tasks"] == 1 and d["passed"] == 1 and d["pass_at_1"] == 1
+    assert d["not_run"] == ["T2", "T3"]
+    assert d["rows"][1]["failed_rung"] == "quota" and d["rows"][1]["passed"] is False
+    assert d["tokens_in"] == 17  # the model calls that happened are still counted
+    assert "| C run2 (2 not run: quota) | 1 | 1/1 | 1/1 |" in summary_table(tmp_path)
+    assert _cell(d["rows"][1]) == "not run (quota)"
+
+    # after the reset the missing tasks are run again and merged in; the list shrinks
+    merge_results(p, [_row("T2", True, 1, 1)])
+    d = json.loads(p.read_text())
+    assert d["not_run"] == ["T3"] and d["tasks"] == 2 and d["passed"] == 2

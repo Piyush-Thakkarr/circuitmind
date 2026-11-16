@@ -425,3 +425,23 @@ took most of it. The harness reports that message as "simulation failed (exit 1)
 would count as a design failure; runs 2 and 3 wait for the reset, and a quota check before each sweep
 is the next harness item. The simulated confirmation of the active-low T18 design is owed when the
 quota is back.
+
+**Wokwi's "used up your Free plan monthly CI minute quota" reply is a state the engine remembers,
+never a simulation failure.** Until 16 Nov 2026 the harness reported it as "simulation failed (exit 1)",
+so a sweep that hit it would have scored every later design as a failure and the web app would have shown
+a sound design as "not verified". Now the simulate rung returns a failed rung with `quota_exhausted` set,
+charges nothing and writes `runs/wokwi_quota.json` (since, expected reset, the message); the generation
+loop stops after that attempt instead of sending the refusal to the model; `circuitmind bench` refuses
+to start while the state holds (exit 2, nothing spent) and, if the quota runs out mid-sweep, stops at once
+and writes the rest as `failed_rung: quota`, which the results file lists under `not_run`, the summary
+table shows as "(n not run: quota)" and the per-task matrix as "not run (quota)"; `tasks` counts only what
+was verified, so a cut-short sweep is never reported as x of 25. The web engine downgrades a new job to the
+free rungs when the state holds, returns a `notice` the web app shows under the prompt and above the result,
+and labels the result "Unverified: passed the free checks, not simulated"; the guide's note says the same.
+The state expires on the first day of the next month (Wokwi's quota is monthly; the dashboard is the
+source of truth) and is cleared by the next simulation that runs. Checked for real on 16 Nov with the quota
+actually gone: `circuitmind reference T01_blink` printed the new rung line and wrote the file, `/health`
+reported it, and `bench` refused with exit 2. Groq's daily window was also used up that evening and no
+Gemini key is set, so the web engine path was checked with the mock provider replaying T01's reference
+design: the reply had `simulate: false` and the notice, the five free rungs ran for real (compile 14 s),
+and the result came back passed, unsimulated, with the notice and the unverified guide note.

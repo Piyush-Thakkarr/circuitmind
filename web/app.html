@@ -127,6 +127,14 @@
       var b=health.budget, pct=Math.min(100, Math.round(100*b.used_ms/b.total_ms));
       parts.push('<span>simulator budget this month: '+CM.minutes(b.used_ms)+' of '+CM.minutes(b.total_ms)+' min used</span><span class="bar" title="'+pct+'%"><i style="width:'+pct+'%"></i></span>');
     }
+    /* the engine's last simulation was refused for the month's quota: say so, and the box stays unticked */
+    var q=health.quota;
+    if (q && q.exhausted){
+      parts.push('<span class="warn">'+esc(q.notice)+'</span>');
+      $('simulate').checked=false; $('simulate').disabled=true; $('simulate').parentNode.title=q.notice;
+    } else if ($('simulate').disabled){
+      $('simulate').disabled=false; $('simulate').parentNode.title='';
+    }
     el.innerHTML=parts.join(''); el.hidden=!parts.length;
   }
   function refreshRuns(){
@@ -191,6 +199,7 @@
         return;
       }
       refreshRuns();
+      if (j.notice) $('attempts_view').innerHTML='<div class="notice">'+esc(j.notice)+'</div>';
       stream(j.job_id);
     })
     .catch(function(err){
@@ -218,6 +227,10 @@
         setRung(e.attempt, e.rung, e.passed?'pass':'fail', e.summary);
         var i=RUNGS.indexOf(e.rung); if (e.passed && i<RUNGS.length-1 && $('simulate').checked) setRung(e.attempt, RUNGS[i+1], 'active');
         if (!e.passed) setStatus(e.attempt, 'failed at '+e.rung);
+      }
+      else if (e.kind==='quota'){
+        setStatus(e.attempt, 'simulator refused: the free minutes for this month are used up');
+        checkConn(true); /* the engine now reports the quota state under the prompt */
       }
       else if (e.kind==='attempt.done'){
         stopTimer(e.attempt);
